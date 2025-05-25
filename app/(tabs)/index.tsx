@@ -1,6 +1,16 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { ScrollView, Image, Pressable, Modal } from "react-native";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import {
+    Modal,
+    StyleProp,
+    ViewStyle,
+    Pressable,
+    KeyboardAvoidingView,
+    Platform,
+    TouchableWithoutFeedback,
+    Keyboard
+} from "react-native";
 
+import { FlashList } from "@shopify/flash-list";
 import {
     db,
     getAllHeroes,
@@ -17,247 +27,259 @@ import {
     TextField,
     Confirm
 } from "@/components";
-import { useGlobal, useTheme } from "@/contexts";
 
+import { HeroRelationsModal, HeroSelectionModal } from "@/components/hero";
+
+import { useGlobal, useTheme } from "@/contexts";
 import { increaseHexIntensity } from "@/utils";
 
+// Constants
 const RELATION_IMAGE_SIZE = 44;
+const RELATION_TYPES = ["Combo", "Weak Vs", "Strong Vs"] as const;
+export type RelationType = (typeof RELATION_TYPES)[number];
 
-type HeroType = {
+interface Hero {
     id: number;
     name: string;
     image: string;
-};
+    relations?: Record<RelationType, Hero[]>;
+}
 
-const RELATION_TYPES = ["Combo", "Weak Vs", "Strong Vs"];
+interface HeroRelation {
+    mainHeroId: number;
+    targetHeroId: number;
+    relationType: RelationType;
+}
 
-const Home = () => {
-    const [heroes, setHeroes] = useState<HeroType[]>([]);
-    const [relationType, setRelationType] = useState<keyof RELATION_TYPES>(
+const HeroCard = React.memo(
+    ({ hero, onPress }: { hero: Hero; onPress: () => void }) => (
+        <Pressable onPress={onPress}>
+            <HeroImage heroId={hero.id} name={hero.name} />
+        </Pressable>
+    )
+);
+
+function Home() {
+    const [heroes, setHeroes] = useState<Hero[]>([]);
+    const [relationType, setRelationType] = useState<RelationType>(
         RELATION_TYPES[0]
     );
-    const [selectedHero, setSelectedHero] = useState<HeroType>(null);
-    const [search, setSearch] = useState<string>("");
+    const [selectedHero, setSelectedHero] = useState<Hero | null>(null);
+    const [search, setSearch] = useState("");
+    const [selectionSearch, setSelectionSearch] = useState("");
+    const [showHeroSelections, setShowHeroSelections] = useState(false);
 
     const { setLoading } = useGlobal();
     const { colors } = useTheme();
 
+    const modalStyle: StyleProp<ViewStyle> = useMemo(
+        () => ({
+            backgroundColor: increaseHexIntensity(colors.background, 0.2)
+        }),
+        [colors.background]
+    );
+
+    // Fetch heroes once
     useEffect(() => {
         (async () => {
-            setHeroes([]);
             setLoading(true);
-
             try {
-                const res = await getAllHeroes();
-                setHeroes(res);
-            } catch (e) {
+                setHeroes(await getAllHeroes());
+            } catch (e: any) {
                 alert(e.message);
             } finally {
                 setLoading(false);
             }
         })();
-    }, []);
+    }, [setLoading]);
 
-    const handleResetRelations = () => {
+    const filteredHeroes = useMemo(
+        () =>
+            heroes.filter(h =>
+                h.name.toLowerCase().includes(search.toLowerCase())
+            ),
+        [heroes, search]
+    );
+
+    const handleResetRelations = useCallback(() => {
         setSelectedHero(null);
         setRelationType(RELATION_TYPES[0]);
-    };
+        setShowHeroSelections(false);
+    }, []);
 
-    const memoizedHeroes = useMemo(
-        () => (
-            <View className="flex-row flex-wrap">
-                {heroes.map((hero, index) => (
-                    <Pressable
-                        className="justify-center items-center"
-                        key={index}
-                        onPress={() => {
-                            setSelectedHero(hero);
-                        }}
-                    >
-                        <HeroImage heroId={hero.id} name={hero.name} />
-                    </Pressable>
-                ))}
-            </View>
-        ),
-        [heroes]
-    );
+    const refreshRelations = useCallback(async (hero: Hero) => {
+        hero.relations = await getHeroRelations(hero);
+    }, []);
 
-    const selectedHeroIndex = useMemo(
-        () => heroes.findIndex(hero => hero.id === selectedHero?.id),
-        [heroes, selectedHero]
-    );
-
-    const handleAddHeroRelation = async () => {
-        const targetHeroId = Math.floor(Math.random() * (heroes.length + 1));
-        const targetHeroIndex = heroes.findIndex(
-            hero => hero.id === targetHeroId
+    const updateHeroesState = useCallback((h1: Hero, h2: Hero) => {
+        setHeroes(prev =>
+            prev.map(h => (h.id === h1.id ? h1 : h.id === h2.id ? h2 : h))
         );
-        const targetHero = heroes[targetHeroIndex];
+    }, []);
 
-        if (selectedHeroIndex === -1 || targetHeroIndex === -1) {
-            throw new Error("One or both not found!");
-        }
-
-        try {
+    const handleAddHeroRelation = useCallback(
+        async (target: Hero) => {
+            if (!selectedHero) return;
             await createHeroRelation({
                 mainHeroId: selectedHero.id,
-                targetHeroId,
+                targetHeroId: target.id,
                 relationType
             });
+            await Promise.all([
+                refreshRelations(selectedHero),
+                refreshRelations(target)
+            ]);
+            updateHeroesState(selectedHero, target);
+        },
+        [relationType, refreshRelations, updateHeroesState, selectedHero]
+    );
 
-            // Refresh selected hero's relations and targeted hero's relations
-            selectedHero.relations = await getHeroRelations(selectedHero);
-            targetHero.relations = await getHeroRelations(targetHero);
-
-            heroes[selectedHeroIndex] = selectedHero;
-            heroes[targetHeroIndex] = targetHero;
-
-            setHeroes([...heroes]);
-        } catch (e) {
-            alert(e.message);
-        }
-    };
-
-    const handleDeleteHeroRelation = async targetHero => {
-        const targetHeroIndex = heroes.findIndex(
-            hero => hero.id === targetHero.id
-        );
-
-        if (selectedHeroIndex === -1 || targetHeroIndex === -1) {
-            throw new Error("One or both not found!");
-        }
-
-        try {
+    const handleDeleteHeroRelation = useCallback(
+        async (target: Hero) => {
+            if (!selectedHero) return;
             await deleteHeroRelation({
                 mainHeroId: selectedHero.id,
-                targetHeroId: targetHero.id,
+                targetHeroId: target.id,
                 relationType
             });
+            await Promise.all([
+                refreshRelations(selectedHero),
+                refreshRelations(target)
+            ]);
+            updateHeroesState(selectedHero, target);
+        },
+        [relationType, refreshRelations, updateHeroesState, selectedHero]
+    );
 
-            // Refresh selected hero's relations and targeted hero's relations
-            selectedHero.relations = await getHeroRelations(selectedHero);
-            targetHero.relations = await getHeroRelations(targetHero);
+    // Renderers
+    const renderHero = useCallback(
+        ({ item }: { item: Hero }) => (
+            <HeroCard hero={item} onPress={() => setSelectedHero(item)} />
+        ),
+        []
+    );
 
-            heroes[selectedHeroIndex] = selectedHero;
-            heroes[targetHeroIndex] = targetHero;
+    const renderSelection = useCallback(
+        ({ item }: { item: Hero }) => (
+            <Pressable
+                onPress={() =>
+                    Confirm(
+                        "",
+                        `Add ${item.name} to ${selectedHero?.name} ( ${relationType}) ?`,
+                        async () => {
+                            await handleAddHeroRelation(item);
+                            setShowHeroSelections(false);
+                        }
+                    )
+                }
+                style={{ margin: 8 }}
+            >
+                <HeroImage heroId={item.id} name={item.name} />
+            </Pressable>
+        ),
+        [handleAddHeroRelation, relationType, selectedHero]
+    );
 
-            setHeroes([...heroes]);
-        } catch (e) {
-            alert(e.message);
-        }
+    const keyExtractor = useCallback((item: Hero) => item.id.toString(), []);
+
+    // Selection data
+    const availableSelections = useMemo(
+        () =>
+            heroes
+                .filter(h => h.id !== selectedHero?.id)
+                .filter(h =>
+                    h.name.toLowerCase().includes(selectionSearch.toLowerCase())
+                ),
+        [heroes, selectedHero, selectionSearch]
+    );
+
+    const handleChangeSelectedHero = async (hero: Hero) => {
+        setSelectedHero({
+            ...hero,
+            relations: await getHeroRelations(hero)
+        });
+
+        setRelationType(
+            relationType === "Combo"
+                ? "Combo"
+                : relationType === "Weak Vs"
+                ? "Strong Vs"
+                : "Weak Vs"
+        );
     };
 
     return (
-        <Container
-            style={{
-                paddingTop: 0,
-                paddingHorizontal: 0
-            }}
+        <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
         >
-            {selectedHero && (
-                <Modal
-                    transparent
-                    visible={!!selectedHero}
-                    onRequestClose={handleResetRelations}
-                    animationType="fade"
-                >
-                    <View
-                        style={{
-                            backgroundColor: increaseHexIntensity(
-                                colors.background,
-                                0.2
-                            )
-                        }}
-                        className="h-[90%] rounded-xl border m-4 p-4 space-y-8"
-                    >
-                        <View className="flex-row justify-start items-center space-x-8 pl-4">
+            <TouchableWithoutFeedback
+                onPress={Keyboard.dismiss}
+                accessible={false}
+            >
+                <Container style={{ paddingHorizontal: 0 }}>
+                    {selectedHero && (
+                        <HeroRelationsModal
+                            visible={!!selectedHero}
+                            hero={selectedHero}
+                            relationType={relationType}
+                            onClose={handleResetRelations}
+                            onSelectRelationType={setRelationType}
+                            onPressAdd={() => setShowHeroSelections(true)}
+                            onPressHero={handleChangeSelectedHero}
+                            onLongPressHero={handleDeleteHeroRelation}
+                        />
+                    )}
+
+                    {selectedHero && showHeroSelections && (
+                        <HeroSelectionModal
+                            visible={!!selectedHero && showHeroSelections}
+                            selectedHero={selectedHero}
+                            search={selectionSearch}
+                            onChangeSearch={setSelectionSearch}
+                            onClose={() => {
+                                setShowHeroSelections(false);
+                                setSelectionSearch("");
+                            }}
+                            selections={availableSelections}
+                            onSelect={async hero => {
+                                await handleAddHeroRelation(hero);
+                                setShowHeroSelections(false);
+                            }}
+                            relationType={relationType}
+                        />
+                    )}
+
+                    {/* Search Bar */}
+                    <View className="flex-row items-center px-4 my-4 space-x-2">
+                        <TextField
+                            value={search}
+                            onChangeText={setSearch}
+                            className="flex-1"
+                            label="Search Hero"
+                        />
+                        {search && (
                             <Icon
-                                name="arrow-back-ios"
-                                onPress={handleResetRelations}
+                                name="clear"
+                                size="large"
+                                onPress={() => setSearch("")}
                             />
-
-                            <View className="flex-row justify-center items-center space-x-4">
-                                <HeroImage heroId={selectedHero.id} size={64} />
-
-                                <Text variant="header">
-                                    {selectedHero.name}
-                                </Text>
-                            </View>
-                        </View>
-
-                        <View className="flex-row">
-                            {RELATION_TYPES.map(type => (
-                                <Pressable
-                                    key={type}
-                                    style={{
-                                        backgroundColor:
-                                            type === relationType
-                                                ? colors.primary
-                                                : undefined,
-                                        width: `${
-                                            100 / RELATION_TYPES.length
-                                        }%`,
-                                        borderColor: colors.border
-                                    }}
-                                    className="border justify-center items-center p-2"
-                                    onPress={() => setRelationType(type)}
-                                >
-                                    <Text variant="body">{type}</Text>
-                                </Pressable>
-                            ))}
-                        </View>
-
-                        <View className="flex-row flex-wrap">
-                            <View
-                                className="m-[10] rounded-full border-[2px] justify-center items-center"
-                                style={{
-                                    width: RELATION_IMAGE_SIZE,
-                                    height: RELATION_IMAGE_SIZE
-                                }}
-                            >
-                                <Icon
-                                    name="add"
-                                    size={RELATION_IMAGE_SIZE - 10}
-                                    onPress={handleAddHeroRelation}
-                                />
-                            </View>
-
-                            {selectedHero.relations[relationType].map(hero => (
-                                <Pressable
-                                    onLongPress={() =>
-                                        Confirm(
-                                            "", //"Remove Hero",
-                                            `Are you sure to remove ${hero.name} ?`,
-                                            async () =>
-                                                await handleDeleteHeroRelation(
-                                                    hero
-                                                )
-                                        )
-                                    }
-                                    key={hero.id}
-                                >
-                                    <HeroImage
-                                        heroId={hero.id}
-                                        size={RELATION_IMAGE_SIZE}
-                                        name={hero.name}
-                                        margin={10}
-                                    />
-                                </Pressable>
-                            ))}
-                        </View>
+                        )}
                     </View>
-                </Modal>
-            )}
 
-            {/*<View className="flex-row justify-between space-x-4 px-2">
-                <Icon name="search" />
-                <TextField value={search} onChangeText={setSearch} />
-                <Icon name="clear" />
-            </View>*/}
-
-            <ScrollView>{memoizedHeroes}</ScrollView>
-        </Container>
+                    {/* Hero Grid */}
+                    <FlashList
+                        showsVerticalScrollIndicator={false}
+                        data={filteredHeroes}
+                        renderItem={renderHero}
+                        keyExtractor={keyExtractor}
+                        numColumns={5}
+                        estimatedItemSize={100}
+                        keyboardShouldPersistTaps="handled"
+                    />
+                </Container>
+            </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
     );
-};
-
+}
 export default Home;

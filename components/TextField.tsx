@@ -3,6 +3,7 @@ import { TextInput } from "react-native-paper";
 import { StyleProp, TextStyle } from "react-native";
 
 import { useTheme } from "@/contexts";
+import { reduceHexIntensity } from "@/utils";
 
 // Use TextInput from react-native-paper directly for props
 interface TextFieldProps extends React.ComponentProps<typeof TextInput> {
@@ -37,7 +38,10 @@ const TextField = forwardRef<any, TextFieldProps>(
                 ref={ref}
                 style={[
                     {
-                        backgroundColor: colors.background
+                        backgroundColor: 
+                            colors.background
+                            
+                        
                     },
                     multiline
                         ? { paddingVertical: 12, lineHeight: 24 }

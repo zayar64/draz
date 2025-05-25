@@ -1,4 +1,4 @@
-import React from "react"
+import React from "react";
 import { Image } from "react-native";
 
 import View from "../View";
@@ -26,15 +26,19 @@ const HeroImage = ({
 
     const borderWidth = size / (DEFAULT_SIZE / 2);
     return (
-        <View className="flex-col justify-center items-center">
+        <View
+            className="flex-col justify-center items-center"
+            style={{
+                margin
+            }}
+        >
             <View
                 style={{
                     width: size,
                     height: size,
-                    borderWidth,
-                     margin
+                    borderWidth
                 }}
-                className="rounded-full bg-amber-100"
+                className="rounded-full"
             >
                 <Image
                     source={image || require("@/assets/images/default.png")}
@@ -58,6 +62,6 @@ const HeroImage = ({
             )}
         </View>
     );
-}
+};
 
-export default React.memo(HeroImage)
+export default React.memo(HeroImage);
