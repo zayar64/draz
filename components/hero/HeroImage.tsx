@@ -1,3 +1,4 @@
+import React from "react"
 import { Image } from "react-native";
 
 import View from "../View";
@@ -15,12 +16,12 @@ interface ImageType {
 
 const DEFAULT_SIZE = 52;
 
-export default function HeroImage({
+const HeroImage = ({
     heroId,
     name,
     size = DEFAULT_SIZE,
     margin = 12
-}: ImageType) {
+}: ImageType) => {
     const image = heroImageMapping[heroId];
 
     const borderWidth = size / (DEFAULT_SIZE / 2);
@@ -58,3 +59,5 @@ export default function HeroImage({
         </View>
     );
 }
+
+export default React.memo(HeroImage)

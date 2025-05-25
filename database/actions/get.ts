@@ -12,38 +12,35 @@ function pickRandom(array, count) {
     return result;
 }
 
-export const getAllHeroes = async () => {
-    const heroes = await db.getAllAsync("SELECT * FROM hero");
+export const getHeroRelations = async hero => {
     const relationTypes = await db.getAllAsync("SELECT * FROM relation_type");
 
-    for (const hero of heroes) {
-        const heroRelations = await db.getAllAsync(
-            "SELECT * FROM relation WHERE main_hero_id = ?",
-            [hero.id]
-        );
-        const relations = {};
-        for (const relationType of relationTypes) {
-            relations[relationType.name] = [];
-            for (const heroRelation of heroRelations) {
-                if (heroRelation.relation_type_id !== relationType.id) continue;
-                const targetHero = await db.getFirstAsync(
-                    "SELECT * FROM hero WHERE id = ?",
-                    [heroRelation.target_hero_id]
-                );
-                if (targetHero) relations[relationType.name].push(targetHero);
-            }
+    const heroRelations = await db.getAllAsync(
+        "SELECT * FROM relation WHERE main_hero_id = ?",
+        [hero.id]
+    );
+    const relations = {};
+    for (const relationType of relationTypes) {
+        relations[relationType.name] = [];
+        for (const heroRelation of heroRelations) {
+            if (heroRelation.relation_type_id !== relationType.id) continue;
+            const targetHero = await db.getFirstAsync(
+                "SELECT * FROM hero WHERE id = ?",
+                [heroRelation.target_hero_id]
+            );
+            if (targetHero) relations[relationType.name].push(targetHero);
         }
-        hero.relations = relations;
+    }
+
+    return relations;
+};
+
+export const getAllHeroes = async () => {
+    const heroes = await db.getAllAsync("SELECT * FROM hero ORDER BY name");
+
+    for (const hero of heroes) {
+        hero.relations = await getHeroRelations(hero);
     }
 
     return heroes;
-
-    /*return heroes.map(hero => ({
-        ...hero,
-        relations: {
-            Combo: pickRandom(heroes, 10),
-            "Weak Vs": pickRandom(heroes, 10),
-            "Strong Vs": pickRandom(heroes, 10)
-        }
-    }));*/
 };
