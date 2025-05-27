@@ -36,11 +36,15 @@ export const getHeroRelations = async hero => {
 };
 
 export const getAllHeroes = async () => {
+  try {
     const heroes = await db.getAllAsync("SELECT * FROM hero ORDER BY name");
 
-    for (const hero of heroes) {
+    /*for (const hero of heroes) {
         hero.relations = await getHeroRelations(hero);
-    }
+    }*/
 
     return heroes;
+  } catch {
+    return []
+  }
 };

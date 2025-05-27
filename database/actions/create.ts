@@ -1,4 +1,5 @@
 import { db } from "../database";
+import { OPPOSITE_RELATION_TYPE_MAPPINGS } from "@/constants";
 
 export const createHeroRelation = async data => {
     const { mainHeroId, targetHeroId, relationType } = data;
@@ -15,34 +16,33 @@ export const createHeroRelation = async data => {
             "SELECT * FROM relation_type"
         );
 
-        if (relationType === "Combo") {
+        const relationExist = await db.getFirstAsync(
+            "SELECT * FROM relation WHERE main_hero_id = ? AND target_hero_id = ? AND relation_type_id = ?",
+            [mainHeroId, targetHeroId, relationTypeId]
+        );
+
+        if (!relationExist) {
             await db.runAsync(
                 "INSERT INTO relation (main_hero_id, target_hero_id, relation_type_id) values(?, ?, ?)",
                 [mainHeroId, targetHeroId, relationTypeId]
-            );
-
-            await db.runAsync(
-                "INSERT INTO relation (main_hero_id, target_hero_id, relation_type_id) values(?, ?, ?)",
-                [targetHeroId, mainHeroId, relationTypeId]
-            );
-        } else {
-            await db.runAsync(
-                "INSERT INTO relation (main_hero_id, target_hero_id, relation_type_id) values(?, ?, ?)",
-                [mainHeroId, targetHeroId, relationTypeId]
-            );
-
-            await db.runAsync(
-                "INSERT INTO relation (main_hero_id, target_hero_id, relation_type_id) values(?, ?, ?)",
-                [
-                    targetHeroId,
-                    mainHeroId,
-                    relationTypes.find(
-                        item =>
-                            item.id !== relationTypeId && item.name !== "Combo"
-                    ).id
-                ]
             );
         }
+
+        const oppositeRelationTypeId = relationTypes.find(
+            item => item.name === OPPOSITE_RELATION_TYPE_MAPPINGS[relationType]
+        ).id;
+        
+        const oppositeRelationExist = await db.getFirstAsync(
+            "SELECT * FROM relation WHERE main_hero_id = ? AND target_hero_id = ? AND relation_type_id = ?",
+            [targetHeroId, mainHeroId, oppositeRelationTypeId]
+        );
+
+if (!oppositeRelationExist) {
+        await db.runAsync(
+            "INSERT INTO relation (main_hero_id, target_hero_id, relation_type_id) values(?, ?, ?)",
+            [targetHeroId, mainHeroId, oppositeRelationTypeId]
+        );
+}
 
         await db.runAsync("COMMIT");
     } catch (e) {

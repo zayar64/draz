@@ -5,11 +5,18 @@ import Storage from "expo-sqlite/kv-store";
 export const screenWidth = Dimensions.get("window").width;
 export const screenHeight = Dimensions.get("window").height;
 
-export const mediaPath =
-    `${FileSystem.documentDirectory}images/`;
-    
-export const HERO_IMAGES_PATH = `${FileSystem.documentDirectory}`
+export const mediaPath = `${FileSystem.documentDirectory}images/`;
 
-export * from "./IconMapping"
-export * from "./heroImageMapping"
+export const HERO_IMAGES_PATH = `${FileSystem.documentDirectory}`;
 
+export const RELATION_TYPES = ["Combo", "Weak Vs", "Strong Vs"] as const;
+
+export const OPPOSITE_RELATION_TYPE_MAPPINGS = {
+    Combo: "Combo",
+    "Weak Vs": "Strong Vs",
+    "Strong Vs": "Weak Vs"
+};
+
+export * from "./IconMapping";
+export * from "./heroImageMapping";
+export * from "./heroes";

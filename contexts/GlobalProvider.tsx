@@ -20,6 +20,7 @@ import * as MediaLibrary from "expo-media-library";
 import * as Updates from "expo-updates";
 
 import Text from "@/components/Text";
+import { api, myapi } from "@/apis"
 
 /**
  * Restart the app by reloading it.
@@ -65,22 +66,6 @@ export function useGlobal() {
     }
     return context;
 }
-
-const api = axios.create({
-    baseURL: "https://mlbb-stats.ridwaanhall.com/api/",
-    timeout: 10000,
-    headers: {
-        "Content-Type": "application/json"
-    }
-});
-
-const myapi = axios.create({
-    baseURL: "http://127.0.0.1:8000/api/",
-    timeout: 10000,
-    headers: {
-        "Content-Type": "application/json"
-    }
-});
 
 export function GlobalProvider({ children }: { children?: ReactNode }) {
     const [loading, setLoading] = useState(false);

@@ -5,6 +5,8 @@ import { View, Text, Icon, HeroImage, TextField, Confirm } from "@/components";
 import { increaseHexIntensity, reduceHexAlpha } from "@/utils";
 import { useTheme } from "@/contexts";
 
+import { HeroType } from "@/types";
+
 import {
     RelationType,
     RELATION_IMAGE_SIZE,
@@ -14,22 +16,18 @@ import {
 
 const HeroSelectionModal = ({
     visible,
-    selectedHero,
     search,
     onChangeSearch,
     onClose,
-    selections,
-    onSelect,
-    relationType
+    availableHeroes,
+    onSelect
 }: {
     visible: boolean;
-    selectedHero: any;
     search: string;
     onChangeSearch: (text: string) => void;
     onClose: () => void;
-    selections: any[];
-    onSelect: (hero: any) => void;
-    relationType: RelationType;
+    availableHeroes: HeroType[];
+    onSelect: (hero: HeroType) => void;
 }) => {
     const { colors } = useTheme();
     const modalStyle = {
@@ -41,8 +39,6 @@ const HeroSelectionModal = ({
             <View style={modalStyle} className={MODAL_CLASS_NAME}>
                 <View className="flex-row items-center space-x-4">
                     <Icon name="arrow-back-ios" onPress={onClose} />
-                    <HeroImage heroId={selectedHero.id} size={64} />
-                    <Text variant="header">{selectedHero.name}</Text>
                 </View>
 
                 <View className="flex-row items-center space-x-2">
@@ -50,7 +46,6 @@ const HeroSelectionModal = ({
                         value={search}
                         onChangeText={onChangeSearch}
                         className="grow"
-                        label={`Search ${selectedHero.name}'s ( ${relationType} )`}
                     />
                     {search && (
                         <Icon
@@ -64,33 +59,16 @@ const HeroSelectionModal = ({
                 <View />
 
                 <FlashList
-                    data={selections}
-                    renderItem={({ item }) => {
-                        const disabled = selectedHero.relations[relationType]
-                            .map(i => i.id)
-                            .includes(item.id);
-                        return (
-                            <TouchableOpacity
-                                onPress={() =>
-                                    Confirm(
-                                        "",
-                                        `Add ${item.name} to ${selectedHero.name}'s ( ${relationType} ) ?`,
-                                        () => onSelect(item)
-                                    )
-                                }
-                                disabled={disabled}
-                                style={{
-                                    opacity: disabled ? 0.3 : 1
-                                }}
-                            >
-                                <HeroImage
-                                    heroId={item.id}
-                                    name={item.name}
-                                    size={RELATION_IMAGE_SIZE}
-                                />
-                            </TouchableOpacity>
-                        );
-                    }}
+                    data={availableHeroes}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity onPress={() => onSelect(item)}>
+                            <HeroImage
+                                heroId={item.id}
+                                name={item.name}
+                                size={RELATION_IMAGE_SIZE}
+                            />
+                        </TouchableOpacity>
+                    )}
                     keyExtractor={item => item.id.toString()}
                     {...FLASH_LIST_PROPS}
                 />

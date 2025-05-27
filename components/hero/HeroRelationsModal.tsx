@@ -1,15 +1,26 @@
 import React from "react";
-import { Modal, Pressable } from "react-native";
+import { Modal, TouchableOpacity } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { View, Text, Icon, HeroImage } from "@/components";
-import { RelationType } from "./Home"; // or define type separately
 import { increaseHexIntensity } from "@/utils";
 import { useTheme } from "@/contexts";
 import Confirm from "@/components/Confirm";
 
 export type RelationType = (typeof RELATION_TYPES)[number];
 export const RELATION_IMAGE_SIZE = 48;
-export const MODAL_CLASS_NAME = "h-[90%] rounded-xl border m-4 p-4 space-y-4"
+export const MODAL_CLASS_NAME = "h-[90%] rounded-xl border m-4 p-4 space-y-4";
+
+export const FLASH_LIST_PROPS = {
+    showsVerticalScrollIndicator: false,
+    numColumns: 4,
+    estimatedItemSize: 100,
+    keyboardShouldPersistTaps: "handled"
+};
+
+/*showsVerticalScrollIndicator={false}
+numColumns={4}
+estimatedItemSize={100}
+keyboardShouldPersistTaps="handled"*/
 
 const HeroRelationsModal = ({
     visible,
@@ -37,10 +48,7 @@ const HeroRelationsModal = ({
 
     return (
         <Modal transparent visible={visible} onRequestClose={onClose}>
-            <View
-                style={modalStyle}
-                className={MODAL_CLASS_NAME}
-            >
+            <View style={modalStyle} className={MODAL_CLASS_NAME}>
                 <View className="flex-row items-center space-x-4 mb-[6px]">
                     <Icon name="arrow-back-ios" onPress={onClose} />
                     <HeroImage heroId={hero.id} size={64} />
@@ -49,7 +57,7 @@ const HeroRelationsModal = ({
 
                 <View className="rounded-md border-[2px] overflow-hidden flex-row justify-evenly">
                     {["Combo", "Weak Vs", "Strong Vs"].map(type => (
-                        <Pressable
+                        <TouchableOpacity
                             key={type}
                             onPress={() =>
                                 onSelectRelationType(type as RelationType)
@@ -65,22 +73,26 @@ const HeroRelationsModal = ({
                             className="border-x justify-center items-center p-2"
                         >
                             <Text variant="body">{type}</Text>
-                        </Pressable>
+                        </TouchableOpacity>
                     ))}
                 </View>
 
                 <View />
 
                 <FlashList
-                    showsVerticalScrollIndicator={false}
                     data={[
                         undefined,
-                        ...(hero.relations?.[relationType] || [])
+                        ...(hero.relations?.[relationType] || []).sort(
+                            (firstHero, secondHero) =>
+                                (firstHero.name || "").localeCompare(
+                                    secondHero.name || ""
+                                )
+                        )
                     ]}
                     renderItem={({ item }) =>
                         item === undefined ? (
                             <View
-                                className="m-[10] rounded-full border-[2px] justify-center items-center"
+                                className="mt-[12px] mx-[10px] rounded-full border-[2px] justify-center items-center"
                                 style={{
                                     width: RELATION_IMAGE_SIZE,
                                     height: RELATION_IMAGE_SIZE
@@ -93,7 +105,7 @@ const HeroRelationsModal = ({
                                 />
                             </View>
                         ) : (
-                            <Pressable
+                            <TouchableOpacity
                                 key={item.id}
                                 onPress={() => onPressHero(item)}
                                 onLongPress={() =>
@@ -109,11 +121,10 @@ const HeroRelationsModal = ({
                                     size={RELATION_IMAGE_SIZE}
                                     name={item.name}
                                 />
-                            </Pressable>
+                            </TouchableOpacity>
                         )
                     }
-                    numColumns={4}
-                    estimatedItemSize={100}
+                    {...FLASH_LIST_PROPS}
                 />
             </View>
         </Modal>

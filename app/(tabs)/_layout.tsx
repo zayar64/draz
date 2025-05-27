@@ -11,7 +11,7 @@ interface TabItem {
     title: string;
     name: string;
     iconName: string;
-    iconSrc?: IconType
+    iconSrc?: IconType;
     onPress?: () => void;
 }
 
@@ -29,12 +29,12 @@ export default function TabsLayout() {
                 name: "index",
                 iconName: "home"
             },
-            /*{
-                title: "Finished Loans",
-                name: "finished-loans",
-                iconName: "book-check",
+            {
+                title: "Draft",
+                name: "draft",
+                iconName: "sword-cross",
                 iconSrc: "materialCom"
-            },*/
+            },
             { title: "Menu", name: "menu", iconName: "menu" }
         ],
         [router]

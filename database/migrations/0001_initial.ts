@@ -1,11 +1,13 @@
 import { db } from "../database";
 
-export async function initializeDatabase() {
-    await db.execAsync(`
+import { heroes, RELATION_TYPES } from "@/constants";
+
+export async function createTables() {
+    try {
+        await db.execAsync(`
         CREATE TABLE IF NOT EXISTS hero (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name VARCHAR(150) NOT NULL,
-            image TEXT NOT NULL
+            name VARCHAR(150) NOT NULL
         );
         
         CREATE TABLE IF NOT EXISTS relation_type (
@@ -24,7 +26,54 @@ export async function initializeDatabase() {
           UNIQUE(main_hero_id, target_hero_id, relation_type_id)
         );
     `);
+    } catch (e) {
+        console.error(e);
+    }
 }
 
-initializeDatabase();
+const insertHeroes = async () => {
+    try {
+        for (const hero of heroes) {
+            const heroExist = await db.getFirstAsync(
+                "SELECT * FROM hero WHERE id = ?",
+                [hero.id]
+            );
+            if (!heroExist) {
+                await db.runAsync("INSERT INTO hero (id, name) values(?, ?)", [
+                    hero.id,
+                    hero.name
+                ]);
+            }
+        }
+    } catch (e) {
+        console.error(e.message);
+    }
+};
 
+const createRelationTypes = async () => {
+    try {
+        for (const relationType of RELATION_TYPES) {
+            console.log(relationType);
+            const relationTypeExist = await db.getFirstAsync(
+                "SELECT * FROM relation_type WHERE name = ?",
+                [relationType]
+            );
+            if (!relationTypeExist) {
+                await db.runAsync(
+                    "INSERT INTO relation_type (name) values(?)",
+                    [relationType]
+                );
+            }
+        }
+    } catch (e) {
+        console.error(e.message);
+    }
+};
+
+const initializeDatabase = async () => {
+    await createTables();
+    await insertHeroes();
+    await createRelationTypes();
+};
+
+initializeDatabase();

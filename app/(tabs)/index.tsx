@@ -3,7 +3,7 @@ import {
     Modal,
     StyleProp,
     ViewStyle,
-    Pressable,
+    TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
     TouchableWithoutFeedback,
@@ -12,7 +12,6 @@ import {
 
 import { FlashList } from "@shopify/flash-list";
 import {
-    db,
     getAllHeroes,
     createHeroRelation,
     deleteHeroRelation,
@@ -32,39 +31,30 @@ import { HeroRelationsModal, HeroSelectionModal } from "@/components/hero";
 
 import { useGlobal, useTheme } from "@/contexts";
 import { increaseHexIntensity } from "@/utils";
+import { RELATION_TYPES } from "@/constants";
+import { HeroType } from "@/types"
 
 // Constants
 const RELATION_IMAGE_SIZE = 44;
-const RELATION_TYPES = ["Combo", "Weak Vs", "Strong Vs"] as const;
+
 export type RelationType = (typeof RELATION_TYPES)[number];
 
-interface Hero {
-    id: number;
-    name: string;
-    image: string;
-    relations?: Record<RelationType, Hero[]>;
-}
 
-interface HeroRelation {
-    mainHeroId: number;
-    targetHeroId: number;
-    relationType: RelationType;
-}
 
 const HeroCard = React.memo(
-    ({ hero, onPress }: { hero: Hero; onPress: () => void }) => (
-        <Pressable onPress={onPress}>
+    ({ hero, onPress }: { hero: HeroType; onPress: () => void }) => (
+        <TouchableOpacity onPress={onPress}>
             <HeroImage heroId={hero.id} name={hero.name} />
-        </Pressable>
+        </TouchableOpacity>
     )
 );
 
 function Home() {
-    const [heroes, setHeroes] = useState<Hero[]>([]);
+    const [heroes, setHeroes] = useState<HeroType[]>([]);
     const [relationType, setRelationType] = useState<RelationType>(
         RELATION_TYPES[0]
     );
-    const [selectedHero, setSelectedHero] = useState<Hero | null>(null);
+    const [selectedHero, setSelectedHero] = useState<HeroType | null>(null);
     const [search, setSearch] = useState("");
     const [selectionSearch, setSelectionSearch] = useState("");
     const [showHeroSelections, setShowHeroSelections] = useState(false);
@@ -107,18 +97,18 @@ function Home() {
         setShowHeroSelections(false);
     }, []);
 
-    const refreshRelations = useCallback(async (hero: Hero) => {
+    const refreshRelations = useCallback(async (hero: HeroType) => {
         hero.relations = await getHeroRelations(hero);
     }, []);
 
-    const updateHeroesState = useCallback((h1: Hero, h2: Hero) => {
+    const updateHeroesState = useCallback((h1: HeroType, h2: HeroType) => {
         setHeroes(prev =>
             prev.map(h => (h.id === h1.id ? h1 : h.id === h2.id ? h2 : h))
         );
     }, []);
 
     const handleAddHeroRelation = useCallback(
-        async (target: Hero) => {
+        async (target: HeroType) => {
             if (!selectedHero) return;
             await createHeroRelation({
                 mainHeroId: selectedHero.id,
@@ -130,12 +120,13 @@ function Home() {
                 refreshRelations(target)
             ]);
             updateHeroesState(selectedHero, target);
+            setSelectionSearch("")
         },
         [relationType, refreshRelations, updateHeroesState, selectedHero]
     );
 
     const handleDeleteHeroRelation = useCallback(
-        async (target: Hero) => {
+        async (target: HeroType) => {
             if (!selectedHero) return;
             await deleteHeroRelation({
                 mainHeroId: selectedHero.id,
@@ -151,49 +142,7 @@ function Home() {
         [relationType, refreshRelations, updateHeroesState, selectedHero]
     );
 
-    // Renderers
-    const renderHero = useCallback(
-        ({ item }: { item: Hero }) => (
-            <HeroCard hero={item} onPress={() => setSelectedHero(item)} />
-        ),
-        []
-    );
-
-    const renderSelection = useCallback(
-        ({ item }: { item: Hero }) => (
-            <Pressable
-                onPress={() =>
-                    Confirm(
-                        "",
-                        `Add ${item.name} to ${selectedHero?.name} ( ${relationType}) ?`,
-                        async () => {
-                            await handleAddHeroRelation(item);
-                            setShowHeroSelections(false);
-                        }
-                    )
-                }
-                style={{ margin: 8 }}
-            >
-                <HeroImage heroId={item.id} name={item.name} />
-            </Pressable>
-        ),
-        [handleAddHeroRelation, relationType, selectedHero]
-    );
-
-    const keyExtractor = useCallback((item: Hero) => item.id.toString(), []);
-
-    // Selection data
-    const availableSelections = useMemo(
-        () =>
-            heroes
-                .filter(h => h.id !== selectedHero?.id)
-                .filter(h =>
-                    h.name.toLowerCase().includes(selectionSearch.toLowerCase())
-                ),
-        [heroes, selectedHero, selectionSearch]
-    );
-
-    const handleChangeSelectedHero = async (hero: Hero) => {
+    const handleChangeSelectedHero = async (hero: HeroType) => {
         setSelectedHero({
             ...hero,
             relations: await getHeroRelations(hero)
@@ -207,6 +156,51 @@ function Home() {
                 : "Weak Vs"
         );
     };
+
+    // Renderers
+    const renderHero = useCallback(
+        ({ item }: { item: HeroType }) => (
+            <HeroCard
+                hero={item}
+                onPress={() => handleChangeSelectedHero(item)}
+            />
+        ),
+        []
+    );
+
+    const renderSelection = useCallback(
+        ({ item }: { item: HeroType }) => (
+            <TouchableOpacity
+                onPress={() =>
+                    Confirm(
+                        "",
+                        `Add ${item.name} to ${selectedHero?.name} ( ${relationType}) ?`,
+                        async () => {
+                            await handleAddHeroRelation(item);
+                            setShowHeroSelections(false);
+                        }
+                    )
+                }
+                style={{ margin: 8 }}
+            >
+                <HeroImage heroId={item.id} name={item.name} />
+            </TouchableOpacity>
+        ),
+        [handleAddHeroRelation, relationType, selectedHero]
+    );
+
+    const keyExtractor = useCallback((item: HeroType) => item.id.toString(), []);
+
+    // Selection data
+    const availableSelections = useMemo(
+        () =>
+            heroes
+                .filter(h => h.id !== selectedHero?.id)
+                .filter(h =>
+                    h.name.toLowerCase().includes(selectionSearch.toLowerCase())
+                ),
+        [heroes, selectedHero, selectionSearch]
+    );
 
     return (
         <KeyboardAvoidingView
@@ -256,7 +250,7 @@ function Home() {
                             value={search}
                             onChangeText={setSearch}
                             className="flex-1"
-                            label="Search Hero"
+                            label="Search HeroType"
                         />
                         {search && (
                             <Icon
@@ -267,7 +261,7 @@ function Home() {
                         )}
                     </View>
 
-                    {/* Hero Grid */}
+                    {/* HeroType Grid */}
                     <FlashList
                         showsVerticalScrollIndicator={false}
                         data={filteredHeroes}

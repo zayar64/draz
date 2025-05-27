@@ -1,4 +1,5 @@
 import { db } from "../database";
+import { OPPOSITE_RELATION_TYPE_MAPPINGS } from "@/constants";
 
 export const deleteHeroRelation = async data => {
     const { mainHeroId, targetHeroId, relationType } = data;
@@ -15,34 +16,19 @@ export const deleteHeroRelation = async data => {
             "SELECT * FROM relation_type"
         );
 
-        if (relationType === "Combo") {
-            await db.runAsync(
-                "DELETE FROM relation WHERE main_hero_id = ? AND target_hero_id = ? AND relation_type_id = ?",
-                [mainHeroId, targetHeroId, relationTypeId]
-            );
+        await db.runAsync(
+            "DELETE FROM relation WHERE main_hero_id = ? AND target_hero_id = ? AND relation_type_id = ?",
+            [mainHeroId, targetHeroId, relationTypeId]
+        );
 
-            await db.runAsync(
-                "DELETE FROM relation WHERE main_hero_id = ? AND target_hero_id = ? AND relation_type_id = ?",
-                [targetHeroId, mainHeroId, relationTypeId]
-            );
-        } else {
-            await db.runAsync(
-                "DELETE FROM relation WHERE main_hero_id = ? AND target_hero_id = ? AND relation_type_id = ?",
-                [mainHeroId, targetHeroId, relationTypeId]
-            );
+        const oppositeRelationTypeId = relationTypes.find(
+            item => item.name === OPPOSITE_RELATION_TYPE_MAPPINGS[relationType]
+        ).id;
 
-            await db.runAsync(
-                "DELETE FROM relation WHERE main_hero_id = ? AND target_hero_id = ? AND relation_type_id = ?",
-                [
-                    targetHeroId,
-                    mainHeroId,
-                    relationTypes.find(
-                        item =>
-                            item.id !== relationTypeId && item.name !== "Combo"
-                    ).id
-                ]
-            );
-        }
+        await db.runAsync(
+            "DELETE FROM relation WHERE main_hero_id = ? AND target_hero_id = ? AND relation_type_id = ?",
+            [targetHeroId, mainHeroId, oppositeRelationTypeId]
+        );
 
         await db.runAsync("COMMIT");
     } catch (e) {

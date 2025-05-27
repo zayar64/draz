@@ -47,21 +47,21 @@ export const downloadDb = async () => {
         return;
     }
 
-    const customFileName =
-        new Date()
-            .toDateString()
-            .split(" ")
-            .slice(1)
-            .join(" ")
-            .replaceAll(" ", "_") + "_finz.db";
-    const customFilePath = FileSystem.cacheDirectory + customFileName;
-
     try {
         // Copy original DB to new file with custom name
+        /*const customFileName =
+            new Date()
+                .toDateString()
+                .split(" ")
+                .slice(1)
+                .join(" ")
+                .replaceAll(" ", "_") + "_finz.db";
+        const customFilePath = FileSystem.cacheDirectory + customFileName;
+
         await FileSystem.copyAsync({
             from: dbPath,
             to: customFilePath
-        });
+        });*/
 
         console.log("Downloading database...");
         if (await Sharing.isAvailableAsync()) {

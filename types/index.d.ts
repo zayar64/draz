@@ -46,4 +46,4 @@ declare module "@mui/material/Typography" {
 }
 
 export * from "./date";
-export * from "./link";
+export * from "./hero"

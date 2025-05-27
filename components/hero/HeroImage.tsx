@@ -12,6 +12,7 @@ interface ImageType {
     name?: string;
     size?: number;
     margin?: number;
+    disabled?: boolean;
 }
 
 const DEFAULT_SIZE = 52;
@@ -20,7 +21,9 @@ const HeroImage = ({
     heroId,
     name,
     size = DEFAULT_SIZE,
-    margin = 12
+    margin = 12,
+    disabled,
+    imageStyle
 }: ImageType) => {
     const image = heroImageMapping[heroId];
 
@@ -33,11 +36,17 @@ const HeroImage = ({
             }}
         >
             <View
-                style={{
-                    width: size,
-                    height: size,
-                    borderWidth
-                }}
+                style={
+                    [
+                        {
+                            width: size,
+                            height: size,
+                            borderWidth
+                        },
+                        imageStyle
+                    ]
+                    
+                }
                 className="rounded-full"
             >
                 <Image
