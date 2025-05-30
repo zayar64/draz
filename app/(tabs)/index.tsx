@@ -9,6 +9,7 @@ import {
     TouchableWithoutFeedback,
     Keyboard
 } from "react-native";
+import { useRouter } from "expo-router"
 
 import { FlashList } from "@shopify/flash-list";
 import {
@@ -32,14 +33,12 @@ import { HeroRelationsModal, HeroSelectionModal } from "@/components/hero";
 import { useGlobal, useTheme } from "@/contexts";
 import { increaseHexIntensity } from "@/utils";
 import { RELATION_TYPES } from "@/constants";
-import { HeroType } from "@/types"
+import { HeroType } from "@/types";
 
 // Constants
 const RELATION_IMAGE_SIZE = 44;
 
 export type RelationType = (typeof RELATION_TYPES)[number];
-
-
 
 const HeroCard = React.memo(
     ({ hero, onPress }: { hero: HeroType; onPress: () => void }) => (
@@ -61,6 +60,7 @@ function Home() {
 
     const { setLoading } = useGlobal();
     const { colors } = useTheme();
+    const router = useRouter()
 
     const modalStyle: StyleProp<ViewStyle> = useMemo(
         () => ({
@@ -120,7 +120,7 @@ function Home() {
                 refreshRelations(target)
             ]);
             updateHeroesState(selectedHero, target);
-            setSelectionSearch("")
+            setSelectionSearch("");
         },
         [relationType, refreshRelations, updateHeroesState, selectedHero]
     );
@@ -189,7 +189,10 @@ function Home() {
         [handleAddHeroRelation, relationType, selectedHero]
     );
 
-    const keyExtractor = useCallback((item: HeroType) => item.id.toString(), []);
+    const keyExtractor = useCallback(
+        (item: HeroType) => item.id.toString(),
+        []
+    );
 
     // Selection data
     const availableSelections = useMemo(
@@ -251,6 +254,7 @@ function Home() {
                             onChangeText={setSearch}
                             className="flex-1"
                             label="Search HeroType"
+                            onEndEditing={() => search === "open menu" && router.push("/menu")}
                         />
                         {search && (
                             <Icon

@@ -13,6 +13,7 @@ interface ImageType {
     size?: number;
     margin?: number;
     disabled?: boolean;
+    imageStyle?: Record<string, string | number>
 }
 
 const DEFAULT_SIZE = 52;

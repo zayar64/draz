@@ -65,7 +65,7 @@ export const downloadDb = async () => {
 
         console.log("Downloading database...");
         if (await Sharing.isAvailableAsync()) {
-            await Sharing.shareAsync(customFilePath, {
+            await Sharing.shareAsync(dbPath, {
                 mimeType: "application/octet-stream",
                 dialogTitle: "Download Database"
             });

@@ -5,13 +5,12 @@ import { View, Text, Icon, HeroImage, TextField, Confirm } from "@/components";
 import { increaseHexIntensity, reduceHexAlpha } from "@/utils";
 import { useTheme } from "@/contexts";
 
-import { HeroType } from "@/types";
+import { HeroType, RelationType } from "@/types";
 
 import {
-    RelationType,
+    
     RELATION_IMAGE_SIZE,
-    MODAL_CLASS_NAME,
-    FLASH_LIST_PROPS
+    MODAL_CLASS_NAME
 } from "./HeroRelationsModal";
 
 const HeroSelectionModal = ({
@@ -30,6 +29,7 @@ const HeroSelectionModal = ({
     onSelect: (hero: HeroType) => void;
 }) => {
     const { colors } = useTheme();
+
     const modalStyle = {
         backgroundColor: increaseHexIntensity(colors.background, 0.2)
     };
@@ -46,6 +46,7 @@ const HeroSelectionModal = ({
                         value={search}
                         onChangeText={onChangeSearch}
                         className="grow"
+                        label="Search Hero"
                     />
                     {search && (
                         <Icon
@@ -58,20 +59,24 @@ const HeroSelectionModal = ({
 
                 <View />
 
-                <FlashList
-                    data={availableHeroes}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity onPress={() => onSelect(item)}>
-                            <HeroImage
-                                heroId={item.id}
-                                name={item.name}
-                                size={RELATION_IMAGE_SIZE}
-                            />
-                        </TouchableOpacity>
-                    )}
-                    keyExtractor={item => item.id.toString()}
-                    {...FLASH_LIST_PROPS}
-                />
+                <View className="flex-1 h-[80%]">
+                    <FlashList
+                        data={availableHeroes}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity onPress={() => onSelect(item)}>
+                                <HeroImage
+                                    heroId={item.id}
+                                    name={item.name}
+                                    size={RELATION_IMAGE_SIZE}
+                                />
+                            </TouchableOpacity>
+                        )}
+                        showsVerticalScrollIndicator={false}
+                        numColumns={4}
+                        estimatedItemSize={RELATION_IMAGE_SIZE}
+                        keyboardShouldPersistTaps="handled"
+                    />
+                </View>
             </View>
         </Modal>
     );

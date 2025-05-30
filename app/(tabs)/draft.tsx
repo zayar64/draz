@@ -1,30 +1,51 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { TouchableOpacity, ScrollView } from "react-native";
-import { Divider } from "react-native-paper";
 import { FlashList } from "@shopify/flash-list";
-import * as Updates from "expo-updates";
 
-import { Container, View, Text, Icon, Button } from "@/components";
-import { HeroImage, DraftHeroSelectionModal } from "@/components/hero";
+import { Container, View, Text, Icon, IconButton, Button } from "@/components";
+import {
+    HeroImage,
+    DraftHeroRelationsModal,
+    DraftHeroSelectionModal
+} from "@/components/hero";
 import { useTheme } from "@/contexts";
 import { getAllHeroes, getHeroRelations } from "@/database";
-import { HeroType } from "@/types";
+import { HeroType, RelationType } from "@/types";
 
 const IMAGE_SIZE = 40;
+const BADGE_SIZE = IMAGE_SIZE * 0.4;
+
+type TeamSlotPress = (index: number, hero: HeroType | null) => void;
+type TeamSlotLongPress = (index: number, hero: HeroType | null) => void;
+
+type RecBoxProps = {
+    title: string;
+    data: [string, number][];
+    excludedHeroes: HeroType[];
+    onSlotPress: (heroId: number, recommendationTitle: string) => void;
+};
 
 type TeamProps = {
     title: string;
     team: (HeroType | null)[];
-    onSlotPress: (index: number, hero: HeroType | null) => void;
+    onSlotPress: TeamSlotPress;
+    onSlotLongPress?: TeamSlotLongPress;
 };
 
-type RecBoxProps = {
+type BanSectionProps = {
     title: string;
-    heroes: HeroType[];
-    excludedHeroes: HeroType[];
+    bannedHeroes: (HeroType | null)[];
+    onSlotPress: TeamSlotPress;
+    onSlotLongPress: (index: number) => void;
 };
 
-const RecBox = ({ title, heroIds, excludedHeroes, ...props }: RecBoxProps) => {
+const RecBox = ({
+    title,
+    data,
+    onSlotPress,
+    excludedHeroes,
+    ...props
+}: RecBoxProps) => {
     const { colors } = useTheme();
 
     return (
@@ -35,40 +56,64 @@ const RecBox = ({ title, heroIds, excludedHeroes, ...props }: RecBoxProps) => {
             >
                 <Text>{title}</Text>
             </View>
-            <View className="h-12 rounded-lg border flex-row px-2">
+            <View className="h-14 rounded-lg border flex-row px-2 pt-1">
                 <FlashList
-                    data={heroIds}
-                    renderItem={({ item }) => (
-                        <HeroImage
-                            heroId={item}
-                            size={IMAGE_SIZE}
-                            margin={4}
-                            imageStyle={{
-                                opacity: excludedHeroes.some(
-                                    h => h.id === Number(item)
-                                )
-                                    ? 0.3
-                                    : 1
-                            }}
-                        />
-                    )}
+                    data={data}
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    estimatedItemSize={20}
+                    estimatedItemSize={IMAGE_SIZE}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity
+                            onPress={() =>
+                                onSlotPress(Number(item[0]), title)
+                            }
+                        >
+                            <View
+                                className="rounded-full border absolute top-1 left-0 z-20 justify-center items-center"
+                                style={{
+                                    width: BADGE_SIZE,
+                                    height: BADGE_SIZE,
+                                    backgroundColor: colors.background
+                                }}
+                            >
+                                <Text style={{ fontSize: BADGE_SIZE * 0.6 }}>
+                                    {item[1]}
+                                </Text>
+                            </View>
+                            <HeroImage
+                                heroId={Number(item[0])}
+                                size={IMAGE_SIZE}
+                                margin={4}
+                                imageStyle={{
+                                    opacity: excludedHeroes.some(
+                                        h => h.id === Number(item[0])
+                                    )
+                                        ? 0.3
+                                        : 1
+                                }}
+                            />
+                        </TouchableOpacity>
+                    )}
                 />
             </View>
         </View>
     );
 };
 
-const TeamSection = ({ title, team, onSlotPress, ...props }: TeamProps) => {
+const TeamSection = ({
+    title,
+    team,
+    onSlotPress,
+    onSlotLongPress,
+    ...props
+}: TeamProps) => {
     const { colors } = useTheme();
-    const color = title.includes("Enemy") ? "#e84444" : "#336ee0";
+    const color = title.includes("Enemy") ? colors.error : colors.primary;
 
     return (
         <View {...props}>
             <View
-                className="self-start ml-2 mb-[-4px] px-2 rounded z-10"
+                className="self-start ml-2 mb-[-4px] px-2 rounded z-10 invisible"
                 style={{ backgroundColor: colors.background }}
             >
                 <Text style={{ color }}>{title}</Text>
@@ -77,69 +122,27 @@ const TeamSection = ({ title, team, onSlotPress, ...props }: TeamProps) => {
                 className="h-14 rounded-lg border flex-row p-2 justify-between"
                 style={{ borderColor: color }}
             >
-                {team.map((hero, idx) => (
-                    <TouchableOpacity
-                        key={idx}
-                        onPress={() => onSlotPress(idx, hero)}
-                        className="rounded-full border-[2px] justify-center items-center"
-                        style={{
-                            width: IMAGE_SIZE,
-                            height: IMAGE_SIZE,
-                            borderColor: color
-                        }}
-                    >
-                        {hero ? (
-                            <HeroImage
-                                heroId={hero.id}
-                                size={IMAGE_SIZE}
-                                imageStyle={{ borderColor: color }}
-                            />
-                        ) : (
-                            <Icon
-                                name="add"
-                                size={IMAGE_SIZE * 0.8}
-                                color={color}
-                            />
-                        )}
-                    </TouchableOpacity>
-                ))}
-            </View>
-        </View>
-    );
-};
-
-const BanSection = ({
-    title,
-    bannedHeroes,
-    onSlotPress,
-    ...props
-}: TeamProps) => {
-    const { colors } = useTheme();
-    const color = colors.text;
-
-    return (
-        <View {...props}>
-            <View
-                className="self-start ml-2 mb-[-4px] px-2 rounded z-10"
-                style={{ backgroundColor: colors.background }}
-            >
-                <Text style={{ color }}>{title}</Text>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View
-                    className="h-14 rounded-lg border flex-row p-2 space-x-2"
-                    style={{ borderColor: color }}
-                >
-                    {bannedHeroes.map((hero, idx) => (
+                {team.map((hero, idx) => {
+                    const disabled = idx !== 0 && !team[idx - 1];
+                    return (
                         <TouchableOpacity
                             key={idx}
+                            disabled={disabled}
                             onPress={() => onSlotPress(idx, hero)}
+                            onLongPress={() =>
+                                team[idx + 1]
+                                    ? alert(
+                                          "You can only remove the last pick!"
+                                      )
+                                    : onSlotLongPress?.(idx, hero)
+                            }
+                            delayLongPress={100}
                             className="rounded-full border-[2px] justify-center items-center"
                             style={{
                                 width: IMAGE_SIZE,
                                 height: IMAGE_SIZE,
                                 borderColor: color,
-                                opacity: hero ? 0.3 : 1
+                                opacity: disabled && !hero ? 0 : 1
                             }}
                         >
                             {hero ? (
@@ -156,9 +159,77 @@ const BanSection = ({
                                 />
                             )}
                         </TouchableOpacity>
-                    ))}
-                </View>
-            </ScrollView>
+                    );
+                })}
+            </View>
+        </View>
+    );
+};
+
+const BanSection = ({
+    title,
+    bannedHeroes,
+    onSlotPress,
+    onSlotLongPress,
+    ...props
+}: BanSectionProps) => {
+    const { colors } = useTheme();
+
+    return (
+        <View {...props}>
+            <View
+                className="self-start ml-2 mb-[-4px] px-2 rounded z-10"
+                style={{ backgroundColor: colors.background }}
+            >
+                <Text style={{ color: colors.text }}>{title}</Text>
+            </View>
+            <View
+                className="h-14 rounded-lg border px-2 pt-2"
+                style={{ borderColor: colors.text }}
+            >
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <View className="flex-row space-x-2">
+                        {bannedHeroes.map((hero, idx) => {
+                            const disabled =
+                                (idx !== 0 && !bannedHeroes[idx - 1]) ||
+                                !!bannedHeroes[idx + 1];
+                            return (
+                                <TouchableOpacity
+                                    key={idx}
+                                    disabled={disabled}
+                                    onPress={() =>
+                                        !bannedHeroes[idx] &&
+                                        onSlotPress(idx, hero)
+                                    }
+                                    onLongPress={() => onSlotLongPress(idx)}
+                                    className="rounded-full border-[2px] justify-center items-center"
+                                    style={{
+                                        width: IMAGE_SIZE,
+                                        height: IMAGE_SIZE,
+                                        display:
+                                            disabled && !hero ? "none" : "flex",
+                                        borderColor: colors.text
+                                    }}
+                                    delayLongPress={100}
+                                >
+                                    {hero ? (
+                                        <HeroImage
+                                            heroId={hero.id}
+                                            size={IMAGE_SIZE}
+                                        />
+                                    ) : (
+                                        <Icon
+                                            name={disabled ? "lock" : "add"}
+                                            size={IMAGE_SIZE * 0.8}
+                                            color={colors.text}
+                                        />
+                                    )}
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                </ScrollView>
+            </View>
         </View>
     );
 };
@@ -174,8 +245,9 @@ const Draft = () => {
     const [bannedHeroes, setBannedHeroes] = useState<(HeroType | null)[]>(
         Array(10).fill(null)
     );
-
-    const [recommendations, setRecommendations] = useState({
+    const [recommendations, setRecommendations] = useState<
+        Record<string, Record<string, number>>
+    >({
         "Recommended Counter Picks": {},
         "Recommended Combo Picks": {},
         "Not Recommended Picks": {},
@@ -187,18 +259,8 @@ const Draft = () => {
     const [onSelect, setOnSelect] = useState<null | ((hero: HeroType) => void)>(
         null
     );
-
-    const handleResetDraft = () => {
-        setBlueTeam(Array(5).fill(null));
-        setRedTeam(Array(5).fill(null));
-        setBannedHeroes(Array(10).fill(null));
-        setRecommendations({
-            "Recommended Counter Picks": {},
-            "Recommended Combo Picks": {},
-            "Not Recommended Picks": {},
-            "Recommended To Ban": {}
-        });
-    };
+    const [selectedHero, setSelectedHero] = useState<HeroType | null>(null);
+    const [relationType, setRelationType] = useState<RelationType>("Combo");
 
     useEffect(() => {
         getAllHeroes().then(setHeroes);
@@ -212,171 +274,266 @@ const Draft = () => {
         );
     }, [heroes, blueTeam, redTeam, bannedHeroes]);
 
+    const updateMap = (
+        target: HeroType[],
+        source: Record<string, number>,
+        increment: number
+    ) =>
+        target.reduce(
+            (acc, hero) => {
+                acc[hero.id] = (source[hero.id] || 0) + increment;
+                return acc;
+            },
+            {} as Record<string, number>
+        );
+
+    const applyRelations = useCallback(
+        async (
+            team: (HeroType | null)[],
+            hero: HeroType,
+            increment: number
+        ) => {
+            const isBlue = team === blueTeam;
+            const isRed = team === redTeam;
+
+            try {
+                const relations = await getHeroRelations(hero);
+                const next = { ...recommendations };
+
+                if (isBlue) {
+                    Object.assign(
+                        next["Recommended Combo Picks"],
+                        updateMap(
+                            relations.Combo,
+                            next["Recommended Combo Picks"],
+                            increment
+                        )
+                    );
+                    Object.assign(
+                        next["Recommended To Ban"],
+                        updateMap(
+                            relations["Weak Vs"],
+                            next["Recommended To Ban"],
+                            increment
+                        )
+                    );
+                }
+
+                if (isRed) {
+                    Object.assign(
+                        next["Not Recommended Picks"],
+                        updateMap(
+                            relations["Strong Vs"],
+                            next["Not Recommended Picks"],
+                            increment
+                        )
+                    );
+                    Object.assign(
+                        next["Recommended Counter Picks"],
+                        updateMap(
+                            relations["Weak Vs"],
+                            next["Recommended Counter Picks"],
+                            increment
+                        )
+                    );
+                }
+
+                setRecommendations(next);
+            } catch (e: any) {
+                alert(e.message);
+            }
+        },
+        [recommendations, blueTeam, redTeam]
+    );
+
     const handleHeroToggle = async (
         team: (HeroType | null)[],
         setter: React.Dispatch<React.SetStateAction<(HeroType | null)[]>>,
         idx: number,
         hero: HeroType | null
     ) => {
-        const isBlue = team === blueTeam;
-        const isRed = team === redTeam;
-
-        const updateMap = (
-            target: HeroType[],
-            source: Record<string, number>,
-            increment: number
-        ) =>
-            target.reduce(
-                (acc, hero) => {
-                    acc[hero.id] = (source[hero.id] || 0) + increment;
-                    return acc;
-                },
-                {} as Record<string, number>
-            );
-
-        const applyRelations = async (hero: HeroType, increment: number) => {
-            try {
-                const relations = await getHeroRelations(hero);
-
-                if (isBlue) {
-                    const combo = updateMap(
-                        relations.Combo,
-                        recommendations["Recommended Combo Picks"],
-                        increment
-                    );
-                    const toBan = updateMap(
-                        relations["Weak Vs"],
-                        recommendations["Recommended To Ban"],
-                        increment
-                    );
-
-                    setRecommendations(prev => ({
-                        ...prev,
-                        "Recommended Combo Picks": {
-                            ...prev["Recommended Combo Picks"],
-                            ...combo
-                        },
-                        "Recommended To Ban": {
-                            ...prev["Recommended To Ban"],
-                            ...toBan
-                        }
-                    }));
-                }
-
-                if (isRed) {
-                    const notRecommended = updateMap(
-                        relations["Strong Vs"],
-                        recommendations["Not Recommended Picks"],
-                        increment
-                    );
-                    const toBan = updateMap(
-                        relations.Combo,
-                        recommendations["Recommended To Ban"],
-                        increment
-                    );
-                    const counter = updateMap(
-                        relations["Weak Vs"],
-                        recommendations["Recommended Counter Picks"],
-                        increment
-                    );
-
-                    setRecommendations(prev => ({
-                        ...prev,
-                        "Not Recommended Picks": {
-                            ...prev["Not Recommended Picks"],
-                            ...notRecommended
-                        },
-                        "Recommended To Ban": {
-                            ...prev["Recommended To Ban"],
-                            ...toBan
-                        },
-                        "Recommended Counter Picks": {
-                            ...prev["Recommended Counter Picks"],
-                            ...counter
-                        }
-                    }));
-                }
-            } catch (e: any) {
-                alert(e.message);
-            }
-        };
-
         if (hero) {
-            setter(prev => {
-                const next = [...prev];
-                next[idx] = null;
-                return next;
+            setSelectedHero({
+                ...hero,
+                relations: await getHeroRelations(hero)
             });
-
-            if (isBlue || isRed) {
-                await applyRelations(hero, -1);
-            }
         } else {
             setShowHeroSelections(true);
-            setOnSelect(() => async (selectedHero: HeroType) => {
+            setOnSelect(() => async (selected: HeroType) => {
                 setter(prev => {
                     const next = [...prev];
-                    next[idx] = selectedHero;
+                    next[idx] = selected;
                     return next;
                 });
                 setShowHeroSelections(false);
                 setSelectionSearch("");
-
-                if (isBlue || isRed) {
-                    await applyRelations(selectedHero, 1);
+                if (team === blueTeam || team === redTeam) {
+                    await applyRelations(team, selected, 1);
                 }
             });
         }
     };
 
+    const handleRecommendationSlotPress = async (
+        heroId: number,
+        recommendationTitle: string
+    ) => {
+        const hero = heroes.find(h => h.id === Number(heroId));
+        if (!hero) {
+            return;
+        }
+        const relations = await getHeroRelations(hero);
+
+        const pickedHeroIds = [
+            ...blueTeam.filter(h => h).map(h => h?.id),
+            ...redTeam.filter(h => h).map(h => h?.id)
+        ];
+
+        relations.Combo = relations.Combo.filter(h =>
+            pickedHeroIds.includes(h.id)
+        );
+        relations["Weak Vs"] = relations["Weak Vs"].filter(h =>
+            pickedHeroIds.includes(h.id)
+        );
+        relations["Strong Vs"] = relations["Strong Vs"].filter(h =>
+            pickedHeroIds.includes(h.id)
+        );
+
+        setSelectedHero({
+            ...hero,
+            relations
+        });
+        if (
+            ["Recommended Counter Picks", "Recommended To Ban"].includes(
+                recommendationTitle
+            )
+        ) {
+            setRelationType("Strong Vs");
+        } else if (recommendationTitle === "Not Recommended Picks") {
+            setRelationType("Weak Vs");
+        }
+    };
+
+    const handleResetDraft = () => {
+        setBlueTeam(Array(5).fill(null));
+        setRedTeam(Array(5).fill(null));
+        setBannedHeroes(Array(10).fill(null));
+        setRecommendations({
+            "Recommended Counter Picks": {},
+            "Recommended Combo Picks": {},
+            "Not Recommended Picks": {},
+            "Recommended To Ban": {}
+        });
+    };
+
     return (
-        <Container className="space-y-6">
+        <Container className="space-y-4">
+            {/*<View className="flex-row justify-between space-x-4">
+                <IconButton
+                    name="refresh"
+                    onPress={handleResetDraft}
+                    variant="contained"
+                />
+                <IconButton name="settings" variant="contained" />
+            </View>*/}
+
             <Button title="Reset Draft" onPress={handleResetDraft} />
 
-            <View>
-                <TeamSection
-                    title="Your Picks"
-                    team={blueTeam}
-                    onSlotPress={(idx, hero) =>
-                        handleHeroToggle(blueTeam, setBlueTeam, idx, hero)
-                    }
-                />
+            <TeamSection
+                title="Your Picks"
+                team={blueTeam}
+                onSlotPress={(idx, hero) =>
+                    handleHeroToggle(blueTeam, setBlueTeam, idx, hero)
+                }
+                onSlotLongPress={async (idx, hero) => {
+                    setBlueTeam(prev => {
+                        const next = [...prev];
+                        next[idx] = null;
+                        return next;
+                    });
+                    await applyRelations(blueTeam, hero!, -1);
+                }}
+            />
 
+            <View>
                 <Text className="text-center text-4xl font-bold italic mt-4">
                     VS
                 </Text>
-
-                <TeamSection
-                    title="Enemy Picks"
-                    team={redTeam}
-                    onSlotPress={(idx, hero) =>
-                        handleHeroToggle(redTeam, setRedTeam, idx, hero)
-                    }
-                />
             </View>
+
+            <TeamSection
+                title="Enemy Picks"
+                team={redTeam}
+                onSlotPress={(idx, hero) =>
+                    handleHeroToggle(redTeam, setRedTeam, idx, hero)
+                }
+                onSlotLongPress={async (idx, hero) => {
+                    setRedTeam(prev => {
+                        const next = [...prev];
+                        next[idx] = null;
+                        return next;
+                    });
+                    await applyRelations(redTeam, hero!, -1);
+                }}
+            />
 
             <BanSection
                 title="Banned Heroes"
                 bannedHeroes={bannedHeroes}
-                onSlotPress={(idx, hero) =>
-                    handleHeroToggle(bannedHeroes, setBannedHeroes, idx, hero)
-                }
+                onSlotPress={(idx, hero) => {
+                    setShowHeroSelections(true);
+                    setOnSelect(() => async (selected: HeroType) => {
+                        setBannedHeroes(prev => {
+                            const next = [...prev];
+                            next[idx] = selected;
+                            return next;
+                        });
+                        setShowHeroSelections(false);
+                        setSelectionSearch("");
+                    });
+                }}
+                onSlotLongPress={idx => {
+                    setBannedHeroes(prev => {
+                        const next = [...prev];
+                        next[idx] = null;
+                        return next;
+                    });
+                }}
             />
 
-            {Object.entries(recommendations).map(([title, _]) => (
+            {Object.entries(recommendations).map(([title, entries]) => (
                 <RecBox
                     key={title}
                     title={title}
-                    heroIds={Object.entries(recommendations[title])
-                        .filter(([id, count]) => count)
-                        .map(i => i[0])}
+                    data={Object.entries(entries)
+                        .filter(([, count]) => count)
+                        .sort((a, b) => b[1] - a[1])}
                     excludedHeroes={excludedHeroes}
+                    onSlotPress={(heroId, recommendationTitle) =>
+                        handleRecommendationSlotPress(
+                            heroId,
+                            recommendationTitle
+                        )
+                    }
                 />
             ))}
 
+            {selectedHero && (
+                <DraftHeroRelationsModal
+                    visible
+                    hero={selectedHero}
+                    relationType={relationType}
+                    onClose={() => {
+                        setSelectedHero(null);
+                        setRelationType("Combo");
+                    }}
+                    onSelectRelationType={setRelationType}
+                />
+            )}
+
             {showHeroSelections && (
                 <DraftHeroSelectionModal
-                    visible={showHeroSelections}
+                    visible
                     search={selectionSearch}
                     onChangeSearch={setSelectionSearch}
                     onClose={() => {
@@ -384,15 +541,13 @@ const Draft = () => {
                         setSelectionSearch("");
                     }}
                     availableHeroes={heroes.filter(
-                        hero =>
-                            !excludedHeroes.some(
-                                excHero => excHero.id === hero.id
-                            ) &&
-                            hero.name
+                        h =>
+                            !excludedHeroes.some(e => e.id === h.id) &&
+                            h.name
                                 .toLowerCase()
                                 .includes(selectionSearch.toLowerCase())
                     )}
-                    onSelect={onSelect}
+                    onSelect={hero => onSelect && onSelect(hero)}
                 />
             )}
         </Container>

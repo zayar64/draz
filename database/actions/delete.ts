@@ -1,29 +1,47 @@
 import { db } from "../database";
 import { OPPOSITE_RELATION_TYPE_MAPPINGS } from "@/constants";
+import { RelationType } from "@/types";
 
-export const deleteHeroRelation = async data => {
-    const { mainHeroId, targetHeroId, relationType } = data;
+export const deleteHeroRelation = async (data : {
+        mainHeroId: number;
+        targetHeroId: number;
+        relationType: RelationType;
+    }) => {
+    const {
+        mainHeroId,
+        targetHeroId,
+        relationType
+    } = data;
     try {
         await db.runAsync("BEGIN");
         const relationTypeId = (
-            await db.getFirstAsync(
-                "SELECT * FROM relation_type WHERE name = ?",
+            await db.getFirstAsync<{ id: number }>(
+                "SELECT id FROM relation_type WHERE name = ?",
                 [relationType]
             )
         )?.id;
 
-        const relationTypes = await db.getAllAsync(
-            "SELECT * FROM relation_type"
-        );
+        if (!relationTypeId) {
+            throw new Error("Invalid Relation Type");
+        }
+
+        const relationTypes = await db.getAllAsync<{
+            id: number;
+            name: string;
+        }>("SELECT * FROM relation_type");
 
         await db.runAsync(
             "DELETE FROM relation WHERE main_hero_id = ? AND target_hero_id = ? AND relation_type_id = ?",
             [mainHeroId, targetHeroId, relationTypeId]
         );
 
-        const oppositeRelationTypeId = relationTypes.find(
+        const oppositeRelationTypeId: number | undefined = relationTypes.find(
             item => item.name === OPPOSITE_RELATION_TYPE_MAPPINGS[relationType]
-        ).id;
+        )?.id;
+
+        if (!oppositeRelationTypeId) {
+            throw new Error("Invalid Relation Type");
+        }
 
         await db.runAsync(
             "DELETE FROM relation WHERE main_hero_id = ? AND target_hero_id = ? AND relation_type_id = ?",

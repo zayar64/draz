@@ -7,41 +7,30 @@ import { useTheme } from "@/contexts";
 import Confirm from "@/components/Confirm";
 import { HeroType, RelationType } from "@/types";
 
-export const RELATION_IMAGE_SIZE = 48;
-export const MODAL_CLASS_NAME =
-    "h-[90%] rounded-xl border m-4 p-4 space-y-4 flex-1";
+import { RELATION_IMAGE_SIZE, MODAL_CLASS_NAME } from "./HeroRelationsModal";
 
 const HeroRelationsModal = ({
     visible,
     hero,
     relationType,
     onClose,
-    onSelectRelationType,
-    onPressAdd,
-    onPressHero,
-    onLongPressHero
+    onSelectRelationType
 }: {
     visible: boolean;
     hero: any;
     relationType: RelationType;
     onClose: () => void;
     onSelectRelationType: (type: RelationType) => void;
-    onPressAdd: () => void;
-    onPressHero: (h: any) => void;
-    onLongPressHero: (h: any) => void;
 }) => {
     const { colors } = useTheme();
     const modalStyle = {
         backgroundColor: increaseHexIntensity(colors.background, 0.2)
     };
 
-    const data: (HeroType | null)[] = [
-        null,
-        ...(hero.relations?.[relationType] || []).sort(
-            (firstHero: HeroType, secondHero: HeroType) =>
-                (firstHero.name || "").localeCompare(secondHero.name || "")
-        )
-    ];
+    const data: HeroType[] = (hero.relations?.[relationType] || []).sort(
+        (firstHero: HeroType, secondHero : HeroType) =>
+            (firstHero.name || "").localeCompare(secondHero.name || "")
+    );
 
     return (
         <Modal transparent visible={visible} onRequestClose={onClose}>
@@ -79,42 +68,14 @@ const HeroRelationsModal = ({
                 <View className="flex-1">
                     <FlashList
                         data={data}
-                        renderItem={({ item }) =>
-                            item === null ? (
-                                <View
-                                    className="mt-[12px] mx-[10px] rounded-full border-[2px] justify-center items-center"
-                                    style={{
-                                        width: RELATION_IMAGE_SIZE,
-                                        height: RELATION_IMAGE_SIZE
-                                    }}
-                                >
-                                    <Icon
-                                        name="add"
-                                        size={RELATION_IMAGE_SIZE - 10}
-                                        onPress={onPressAdd}
-                                    />
-                                </View>
-                            ) : (
-                                <TouchableOpacity
-                                    key={item.id}
-                                    onPress={() => onPressHero(item)}
-                                    onLongPress={() =>
-                                        Confirm(
-                                            "",
-                                            `Are you sure to remove ${item.name}?`,
-                                            () => onLongPressHero(item)
-                                        )
-                                    }
-                                    delayLongPress={300}
-                                >
-                                    <HeroImage
-                                        heroId={item.id}
-                                        size={RELATION_IMAGE_SIZE}
-                                        name={item.name}
-                                    />
-                                </TouchableOpacity>
-                            )
-                        }
+                        renderItem={({ item }) => (
+                            <HeroImage
+                                heroId={item.id}
+                                size={RELATION_IMAGE_SIZE}
+                                name={item.name}
+                                key={item.id}
+                            />
+                        )}
                         showsVerticalScrollIndicator={false}
                         numColumns={4}
                         estimatedItemSize={RELATION_IMAGE_SIZE}

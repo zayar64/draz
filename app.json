@@ -1,68 +1,58 @@
 {
-    "expo": {
-        "name": "MLBB Draft Simulator",
-        "slug": "mlbb-draft-simulator",
-        "version": "1.0.0",
-        "orientation": "portrait",
-        "icon": "./assets/images/hero_images/miya.png",
-        "userInterfaceStyle": "automatic",
-        "newArchEnabled": false,
-        "backgroundColor": "#161920",
-        "ios": {
-            "supportsTablet": true
-        },
-        "android": {
-            "adaptiveIcon": {
-                "foregroundImage": "./assets/images/hero_images/miya.png",
-                "backgroundColor": "#161920"
-            },
-            "permissions": [
-                "android.permission.READ_EXTERNAL_STORAGE",
-                "android.permission.WRITE_EXTERNAL_STORAGE",
-                "android.permission.CAMERA",
-                "android.permission.INTERNET"
-            ],
-            "package": "com.zytech.zink"
-        },
-        "web": {
-            "bundler": "metro",
-            "output": "static",
-            "favicon": "./assets/images/hero_images/miya.png"
-        },
-        "plugins": [
-            "expo-router",
-            "expo-sqlite",
-            [
-                "expo-splash-screen",
-                {
-                    "image": "./assets/images/hero_images/miya.png",
-                    "resizeMode": "cover",
-                    "backgroundColor": "#161920"
-                }
-            ],
-            "expo-asset"
-        ],
-        "experiments": {
-            "typedRoutes": true
-        },
-        "extra": {
-            "router": {
-                "origin": false
-            },
-            "eas": {
-                "projectId": "bb82a1fe-daa1-47ea-87af-66d37c9a1613"
-            }
-        },
-        "owner": "zy-god"
-        /*"doctor": {
-      "reactNativeDirectoryCheck": {
-        "exclude": [
-          "react-native-image-zoom-viewer",
-          "react-native-modal",
-          "react-native-snap-carousel",
-          "react-native-sqlite-storage"
-        ]
+  "expo": {
+    "name": "MLBB Draft Simulator",
+    "slug": "ml-draft",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/hero_images/1.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "backgroundColor": "#161920",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/hero_images/1.png",
+        "backgroundColor": "#161920"
+      },
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.INTERNET"
+      ],
+      "package": "com.zytech.zink"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/hero_images/1.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/hero_images/1.png",
+          "resizeMode": "cover",
+          "backgroundColor": "#161920"
+        }
+      ],
+      "expo-asset"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "bf33454d-07eb-4024-8427-975808d2dd7e"
       }
-    }*/
-    }
+    },
+    "owner": "zy-god"
+  }
 }

@@ -18,7 +18,12 @@ export const myapi = axios.create({
 
 export const getHeroList = async () => {};
 
-import { db, createHeroRelation } from "@/database";
+import {
+    db,
+    getAllHeroes,
+    createHeroRelation,
+    getHeroRelations
+} from "@/database";
 
 /*export const fetchAndCreateHeroRelation = async (heroId: number) => {
     try {
@@ -62,3 +67,33 @@ const fetchAndCreateHeroRelations = async () => {
 };*/
 
 //fetchAndCreateHeroRelations();
+
+
+
+/*import * as FileSystem from "expo-file-system";
+import * as DocumentPicker from "expo-document-picker";
+import * as Sharing from "expo-sharing";
+
+(async () => {
+    const heroes = await getAllHeroes();
+
+    for (const hero of heroes) {
+        hero.relations = await getHeroRelations(hero);
+    }
+
+    const json = JSON.stringify(heroes, null, 2);
+    const fileUri = FileSystem.documentDirectory + "hero.json";
+
+    await FileSystem.writeAsStringAsync(fileUri, json);
+    console.log(`hero.json has been saved to: ${fileUri}`);
+
+    if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, {
+            mimeType: "application/octet-stream",
+            dialogTitle: "Download Database"
+        });
+        console.log("Database shared successfully.");
+    } else {
+        console.error("Sharing is not available on this device.");
+    }
+})();*/

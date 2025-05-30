@@ -1,4 +1,4 @@
-export const heroImageMapping = Object.freeze({
+export const heroImageMapping: Record<number, any> = {
     128: require("../assets/images/hero_images/128.png"),
     127: require("../assets/images/hero_images/127.png"),
     126: require("../assets/images/hero_images/126.png"),
@@ -127,4 +127,4 @@ export const heroImageMapping = Object.freeze({
     3: require("../assets/images/hero_images/3.png"),
     2: require("../assets/images/hero_images/2.png"),
     1: require("../assets/images/hero_images/1.png")
-});
+};

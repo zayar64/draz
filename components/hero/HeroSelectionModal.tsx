@@ -4,12 +4,11 @@ import { FlashList } from "@shopify/flash-list";
 import { View, Text, Icon, HeroImage, TextField, Confirm } from "@/components";
 import { increaseHexIntensity, reduceHexAlpha } from "@/utils";
 import { useTheme } from "@/contexts";
+import { HeroType, RelationType } from "@/types";
 
 import {
-    RelationType,
     RELATION_IMAGE_SIZE,
-    MODAL_CLASS_NAME,
-    FLASH_LIST_PROPS
+    MODAL_CLASS_NAME
 } from "./HeroRelationsModal";
 
 const HeroSelectionModal = ({
@@ -63,37 +62,44 @@ const HeroSelectionModal = ({
 
                 <View />
 
-                <FlashList
-                    data={selections}
-                    renderItem={({ item }) => {
-                        const disabled = selectedHero.relations[relationType]
-                            .map(i => i.id)
-                            .includes(item.id);
-                        return (
-                            <TouchableOpacity
-                                onPress={() =>
-                                    Confirm(
-                                        "",
-                                        `Add ${item.name} to ${selectedHero.name}'s ( ${relationType} ) ?`,
-                                        () => onSelect(item)
-                                    )
-                                }
-                                disabled={disabled}
-                                style={{
-                                    opacity: disabled ? 0.3 : 1
-                                }}
-                            >
-                                <HeroImage
-                                    heroId={item.id}
-                                    name={item.name}
-                                    size={RELATION_IMAGE_SIZE}
-                                />
-                            </TouchableOpacity>
-                        );
-                    }}
-                    keyExtractor={item => item.id.toString()}
-                    {...FLASH_LIST_PROPS}
-                />
+                <View className="flex-1">
+                    <FlashList
+                        data={selections}
+                        renderItem={({ item }) => {
+                            const disabled = selectedHero.relations[
+                                relationType
+                            ]
+                                .map((i: HeroType) => i.id)
+                                .includes(item.id);
+                            return (
+                                <TouchableOpacity
+                                    onPress={() =>
+                                        Confirm(
+                                            "",
+                                            `Add ${item.name} to ${selectedHero.name}'s ( ${relationType} ) ?`,
+                                            () => onSelect(item)
+                                        )
+                                    }
+                                    disabled={disabled}
+                                    style={{
+                                        opacity: disabled ? 0.3 : 1
+                                    }}
+                                >
+                                    <HeroImage
+                                        heroId={item.id}
+                                        name={item.name}
+                                        size={RELATION_IMAGE_SIZE}
+                                    />
+                                </TouchableOpacity>
+                            );
+                        }}
+                        keyExtractor={item => item.id.toString()}
+                        showsVerticalScrollIndicator={false}
+                        numColumns={4}
+                        estimatedItemSize={RELATION_IMAGE_SIZE}
+                        keyboardShouldPersistTaps="handled"
+                    />
+                </View>
             </View>
         </Modal>
     );

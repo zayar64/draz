@@ -1,6 +1,6 @@
 import { db } from "../database";
 
-import { heroes, RELATION_TYPES } from "@/constants";
+const name = "0001_initial";
 
 export async function createTables() {
     try {
@@ -25,55 +25,21 @@ export async function createTables() {
           FOREIGN KEY (relation_type_id) REFERENCES relation_type(id) ON DELETE CASCADE,
           UNIQUE(main_hero_id, target_hero_id, relation_type_id)
         );
+        
+        CREATE TABLE IF NOT EXISTS migration (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name VARCHAR(255) NOT NULL,
+          UNIQUE(name)
+        );
     `);
     } catch (e) {
         console.error(e);
     }
 }
 
-const insertHeroes = async () => {
-    try {
-        for (const hero of heroes) {
-            const heroExist = await db.getFirstAsync(
-                "SELECT * FROM hero WHERE id = ?",
-                [hero.id]
-            );
-            if (!heroExist) {
-                await db.runAsync("INSERT INTO hero (id, name) values(?, ?)", [
-                    hero.id,
-                    hero.name
-                ]);
-            }
-        }
-    } catch (e) {
-        console.error(e.message);
+export const initializeDatabase = async () => {
+  await createTables()
+    if (!(await db.getFirstAsync("SELECT * FROM migration"))) {
+        await db.runAsync("INSERT INTO migration (name) VALUES (?)", [name]);
     }
 };
-
-const createRelationTypes = async () => {
-    try {
-        for (const relationType of RELATION_TYPES) {
-            console.log(relationType);
-            const relationTypeExist = await db.getFirstAsync(
-                "SELECT * FROM relation_type WHERE name = ?",
-                [relationType]
-            );
-            if (!relationTypeExist) {
-                await db.runAsync(
-                    "INSERT INTO relation_type (name) values(?)",
-                    [relationType]
-                );
-            }
-        }
-    } catch (e) {
-        console.error(e.message);
-    }
-};
-
-const initializeDatabase = async () => {
-    await createTables();
-    await insertHeroes();
-    await createRelationTypes();
-};
-
-initializeDatabase();

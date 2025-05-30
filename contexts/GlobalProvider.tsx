@@ -16,39 +16,8 @@ import {
     StyleSheet
 } from "react-native";
 
-import * as MediaLibrary from "expo-media-library";
-import * as Updates from "expo-updates";
-
 import Text from "@/components/Text";
 import { api, myapi } from "@/apis"
-
-/**
- * Restart the app by reloading it.
- */
-export async function restartApp() {
-    try {
-        await Updates.reloadAsync();
-    } catch (error) {
-        console.error("Failed to restart the app:", error);
-    }
-}
-
-export const requestPermissions = async () => {
-    // Request media library permissions
-    const { status } = await MediaLibrary.requestPermissionsAsync(true); // 'true' prompts again if denied
-
-    if (status !== "granted") {
-        Alert.alert(
-            "Permission Required",
-            "This app needs storage access to function properly.",
-            [{ text: "OK" }]
-        );
-    } else {
-        console.log("Media library permission granted.");
-    }
-};
-
-requestPermissions();
 
 interface GlobalContextType {
     loading: boolean;
@@ -84,8 +53,6 @@ export function GlobalProvider({ children }: { children?: ReactNode }) {
                 setLoading,
                 globalMessage,
                 setGlobalMessage,
-                api,
-                myapi
             }}
         >
             <Modal

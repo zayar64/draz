@@ -45,5 +45,32 @@ declare module "@mui/material/Typography" {
     }
 }
 
+export type IconType =
+    | "material"
+    | "materialCom"
+    | "oct"
+    | "ion"
+    | "fa"
+    | "fa5"
+    | "fa6";
+
+export type IconFamilyType =
+    | "AntDesign"
+    | "Entypo"
+    | "EvilIcons"
+    | "Feather"
+    | "FontAwesome"
+    | "FontAwesome5"
+    | "FontAwesote6"
+    | "Fontisto"
+    | "Foundation"
+    | "Ionicons"
+    | "MaterialCommunityIcons"
+    | "MaterialIcons"
+    | "Octicons"
+    | "SimpleLineIcons"
+    | "Zocial";
+
+
 export * from "./date";
 export * from "./hero"

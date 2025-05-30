@@ -38,10 +38,7 @@ const TextField = forwardRef<any, TextFieldProps>(
                 ref={ref}
                 style={[
                     {
-                        backgroundColor: 
-                            colors.background
-                            
-                        
+                        backgroundColor: colors.background
                     },
                     multiline
                         ? { paddingVertical: 12, lineHeight: 24 }
@@ -64,7 +61,7 @@ const TextField = forwardRef<any, TextFieldProps>(
                         ? maxLength ?? MAX_LENGTH
                         : undefined
                 }
-                keyboardType={props.inputMode}
+                //keyboardType={props.inputMode}
                 multiline={multiline}
                 onChangeText={v => {
                     if (props.inputMode === "numeric") {

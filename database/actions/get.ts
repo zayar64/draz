@@ -1,8 +1,10 @@
 import { db } from "../database";
+import { heroes as heroSeedData } from "@/constants";
+import { HeroType, HeroRelationType, RelationType } from "@/types";
 
-function pickRandom(array, count) {
+function pickRandom<T>(array: T[], count: number): T[] {
     const copy = [...array];
-    const result = [];
+    const result: T[] = [];
 
     for (let i = 0; i < count && copy.length > 0; i++) {
         const index = Math.floor(Math.random() * copy.length);
@@ -12,39 +14,48 @@ function pickRandom(array, count) {
     return result;
 }
 
-export const getHeroRelations = async hero => {
-    const relationTypes = await db.getAllAsync("SELECT * FROM relation_type");
+export const getHeroRelations = async (
+    hero: HeroType
+): Promise<HeroRelationType> => {
+    const relationTypes = await db.getAllAsync<{id: number, name: RelationType}>("SELECT * FROM relation_type");
 
-    const heroRelations = await db.getAllAsync(
+    const heroRelations = await db.getAllAsync<{id: number, main_hero_id: number, target_hero_id: number, relation_type_id: number}>(
         "SELECT * FROM relation WHERE main_hero_id = ?",
         [hero.id]
     );
-    const relations = {};
+
+    const relations: HeroRelationType = {
+        Combo: [],
+        "Weak Vs": [],
+        "Strong Vs": []
+    };
+
     for (const relationType of relationTypes) {
-        relations[relationType.name] = [];
+        const relationName = relationType.name as RelationType;
         for (const heroRelation of heroRelations) {
             if (heroRelation.relation_type_id !== relationType.id) continue;
+
             const targetHero = await db.getFirstAsync(
                 "SELECT * FROM hero WHERE id = ?",
                 [heroRelation.target_hero_id]
             );
-            if (targetHero) relations[relationType.name].push(targetHero);
+
+            if (targetHero) {
+                relations[relationName].push(targetHero as HeroType);
+            }
         }
     }
 
     return relations;
 };
 
-export const getAllHeroes = async () => {
-  try {
-    const heroes = await db.getAllAsync("SELECT * FROM hero ORDER BY name");
-
-    /*for (const hero of heroes) {
-        hero.relations = await getHeroRelations(hero);
-    }*/
-
-    return heroes;
-  } catch {
-    return []
-  }
+export const getAllHeroes = async (): Promise<HeroType[]> => {
+    try {
+        const allHeroes = await db.getAllAsync(
+            "SELECT * FROM hero ORDER BY name"
+        );
+        return allHeroes as HeroType[];
+    } catch {
+        return [];
+    }
 };

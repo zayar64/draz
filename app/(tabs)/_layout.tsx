@@ -34,13 +34,12 @@ export default function TabsLayout() {
                 name: "draft",
                 iconName: "sword-cross",
                 iconSrc: "materialCom"
-            },
-            { title: "Menu", name: "menu", iconName: "menu" }
+            }
         ],
         [router]
     );
 
-    useEffect(() => {
+    /*useEffect(() => {
         const checkPermission = async () => {
             const hasPermission = await kvstore.getItem(PERMISSION_KEY);
             setHasPermissionToUseApp(hasPermission === "1");
@@ -64,7 +63,7 @@ export default function TabsLayout() {
                 }}
             />
         );
-    }
+    }*/
 
     return (
         <View className="flex-1">

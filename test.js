@@ -2,7 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 
-function findWordInFiles(dir, word = "FlashList") {
+function findWordInFiles(dir, word) {
     const results = [];
 
     function searchDirectory(directory) {
@@ -29,9 +29,10 @@ function findWordInFiles(dir, word = "FlashList") {
 
 // Get the directory from command-line argument
 const targetDir = process.argv[2];
+const word = process.argv[3] || "Media library permission granted."
 
 if (!targetDir) {
-    console.error("Usage: node findFlashList.js <directory>");
+    console.error("Usage: node test.js <directory> <word>");
     process.exit(1);
 }
 
@@ -42,5 +43,5 @@ if (!fs.existsSync(fullPath)) {
     process.exit(1);
 }
 
-const matches = findWordInFiles(fullPath);
-console.log("Files containing 'FlashList':\n", matches.join("\n"));
+const matches = findWordInFiles(fullPath, word);
+console.log(`Files containing '${word}':\n`, matches.join("\n"));
