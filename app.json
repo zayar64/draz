@@ -1,58 +1,58 @@
 {
-  "expo": {
-    "name": "MLBB Draft Simulator",
-    "slug": "ml-draft",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/hero_images/1.png",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
-    "backgroundColor": "#161920",
-    "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/hero_images/1.png",
-        "backgroundColor": "#161920"
-      },
-      "permissions": [
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.CAMERA",
-        "android.permission.INTERNET"
-      ],
-      "package": "com.zytech.zink"
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/hero_images/1.png"
-    },
-    "plugins": [
-      "expo-router",
-      "expo-sqlite",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/hero_images/1.png",
-          "resizeMode": "cover",
-          "backgroundColor": "#161920"
-        }
-      ],
-      "expo-asset"
-    ],
-    "experiments": {
-      "typedRoutes": true
-    },
-    "extra": {
-      "router": {
-        "origin": false
-      },
-      "eas": {
-        "projectId": "bf33454d-07eb-4024-8427-975808d2dd7e"
-      }
-    },
-    "owner": "zy-god"
-  }
+    "expo": {
+        "name": "Draz",
+        "slug": "draz",
+        "version": "1.1.0",
+        "orientation": "portrait",
+        "icon": "./assets/images/draz.png",
+        "userInterfaceStyle": "automatic",
+        "newArchEnabled": false,
+        "backgroundColor": "#161920",
+        "ios": {
+            "supportsTablet": true
+        },
+        "android": {
+            "adaptiveIcon": {
+                "foregroundImage": "./assets/images/draz.png",
+                "backgroundColor": "#161920"
+            },
+            "permissions": [
+                "android.permission.READ_EXTERNAL_STORAGE",
+                "android.permission.WRITE_EXTERNAL_STORAGE",
+                "android.permission.CAMERA",
+                "android.permission.INTERNET"
+            ],
+            "package": "com.zytech.draz"
+        },
+        "web": {
+            "bundler": "metro",
+            "output": "static",
+            "favicon": "./assets/images/draz.png"
+        },
+        "plugins": [
+            "expo-router",
+            "expo-sqlite",
+            [
+                "expo-splash-screen",
+                {
+                    "image": "./assets/images/zytech.png",
+                    "resizeMode": "cover",
+                    "backgroundColor": "#161920"
+                }
+            ],
+            "expo-asset"
+        ],
+        "experiments": {
+            "typedRoutes": true
+        },
+        "extra": {
+            "router": {
+                "origin": false
+            },
+            "eas": {
+                "projectId": "4861cb14-09ad-4810-9edc-5dcce8bb6b6d"
+            }
+        },
+        "owner": "zy-god"
+    }
 }

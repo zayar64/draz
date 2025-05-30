@@ -253,7 +253,7 @@ function Home() {
                             value={search}
                             onChangeText={setSearch}
                             className="flex-1"
-                            label="Search HeroType"
+                            label="Search Hero"
                             onEndEditing={() => search === "open menu" && router.push("/menu")}
                         />
                         {search && (

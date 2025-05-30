@@ -64,9 +64,7 @@ const RecBox = ({
                     estimatedItemSize={IMAGE_SIZE}
                     renderItem={({ item }) => (
                         <TouchableOpacity
-                            onPress={() =>
-                                onSlotPress(Number(item[0]), title)
-                            }
+                            onPress={() => onSlotPress(Number(item[0]), title)}
                         >
                             <View
                                 className="rounded-full border absolute top-1 left-0 z-20 justify-center items-center"
@@ -384,34 +382,36 @@ const Draft = () => {
         }
         const relations = await getHeroRelations(hero);
 
-        const pickedHeroIds = [
-            ...blueTeam.filter(h => h).map(h => h?.id),
-            ...redTeam.filter(h => h).map(h => h?.id)
-        ];
+        let heroesToDisplayIds = blueTeam.filter(h => h).map(h => h?.id);
 
-        relations.Combo = relations.Combo.filter(h =>
-            pickedHeroIds.includes(h.id)
-        );
-        relations["Weak Vs"] = relations["Weak Vs"].filter(h =>
-            pickedHeroIds.includes(h.id)
-        );
-        relations["Strong Vs"] = relations["Strong Vs"].filter(h =>
-            pickedHeroIds.includes(h.id)
-        );
-
-        setSelectedHero({
-            ...hero,
-            relations
-        });
         if (
             ["Recommended Counter Picks", "Recommended To Ban"].includes(
                 recommendationTitle
             )
         ) {
             setRelationType("Strong Vs");
+            if (recommendationTitle === "Recommended Counter Picks") {
+                heroesToDisplayIds = redTeam.filter(h => h).map(h => h?.id);
+            }
         } else if (recommendationTitle === "Not Recommended Picks") {
             setRelationType("Weak Vs");
+            heroesToDisplayIds = redTeam.filter(h => h).map(h => h?.id);
         }
+
+        relations.Combo = relations.Combo.filter(h =>
+            heroesToDisplayIds.includes(h.id)
+        );
+        relations["Weak Vs"] = relations["Weak Vs"].filter(h =>
+            heroesToDisplayIds.includes(h.id)
+        );
+        relations["Strong Vs"] = relations["Strong Vs"].filter(h =>
+            heroesToDisplayIds.includes(h.id)
+        );
+
+        setSelectedHero({
+            ...hero,
+            relations
+        });
     };
 
     const handleResetDraft = () => {
