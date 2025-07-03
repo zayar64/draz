@@ -18,6 +18,18 @@ const BADGE_SIZE = IMAGE_SIZE * 0.4;
 type TeamSlotPress = (index: number, hero: HeroType | null) => void;
 type TeamSlotLongPress = (index: number, hero: HeroType | null) => void;
 
+type TeamProps = {
+    title: string;
+    team: (HeroType | null)[];
+    onSlotPress: TeamSlotPress;
+};
+
+type BanSectionProps = {
+    title: string;
+    bannedHeroes: (HeroType | null)[];
+    onSlotPress: TeamSlotPress;
+};
+
 type RecBoxProps = {
     title: string;
     data: [string, number][];
@@ -25,84 +37,10 @@ type RecBoxProps = {
     onSlotPress: (heroId: number, recommendationTitle: string) => void;
 };
 
-type TeamProps = {
-    title: string;
-    team: (HeroType | null)[];
-    onSlotPress: TeamSlotPress;
-    onSlotLongPress?: TeamSlotLongPress;
-};
-
-type BanSectionProps = {
-    title: string;
-    bannedHeroes: (HeroType | null)[];
-    onSlotPress: TeamSlotPress;
-    onSlotLongPress: (index: number) => void;
-};
-
-const RecBox = ({
-    title,
-    data,
-    onSlotPress,
-    excludedHeroes,
-    ...props
-}: RecBoxProps) => {
-    const { colors } = useTheme();
-
-    return (
-        <View {...props}>
-            <View
-                className="self-start ml-2 mb-[-4px] px-2 rounded z-10"
-                style={{ backgroundColor: colors.background }}
-            >
-                <Text>{title}</Text>
-            </View>
-            <View className="h-14 rounded-lg border flex-row px-2 pt-1">
-                <FlashList
-                    data={data}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    estimatedItemSize={IMAGE_SIZE}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity
-                            onPress={() => onSlotPress(Number(item[0]), title)}
-                        >
-                            <View
-                                className="rounded-full border absolute top-1 left-0 z-20 justify-center items-center"
-                                style={{
-                                    width: BADGE_SIZE,
-                                    height: BADGE_SIZE,
-                                    backgroundColor: colors.background
-                                }}
-                            >
-                                <Text style={{ fontSize: BADGE_SIZE * 0.6 }}>
-                                    {item[1]}
-                                </Text>
-                            </View>
-                            <HeroImage
-                                heroId={Number(item[0])}
-                                size={IMAGE_SIZE}
-                                margin={4}
-                                imageStyle={{
-                                    opacity: excludedHeroes.some(
-                                        h => h.id === Number(item[0])
-                                    )
-                                        ? 0.3
-                                        : 1
-                                }}
-                            />
-                        </TouchableOpacity>
-                    )}
-                />
-            </View>
-        </View>
-    );
-};
-
 const TeamSection = ({
     title,
     team,
     onSlotPress,
-    onSlotLongPress,
     ...props
 }: TeamProps) => {
     const { colors } = useTheme();
@@ -121,26 +59,15 @@ const TeamSection = ({
                 style={{ borderColor: color }}
             >
                 {team.map((hero, idx) => {
-                    const disabled = idx !== 0 && !team[idx - 1];
                     return (
                         <TouchableOpacity
                             key={idx}
-                            disabled={disabled}
                             onPress={() => onSlotPress(idx, hero)}
-                            onLongPress={() =>
-                                team[idx + 1]
-                                    ? alert(
-                                          "You can only remove the last pick!"
-                                      )
-                                    : onSlotLongPress?.(idx, hero)
-                            }
-                            delayLongPress={100}
                             className="rounded-full border-[2px] justify-center items-center"
                             style={{
                                 width: IMAGE_SIZE,
                                 height: IMAGE_SIZE,
-                                borderColor: color,
-                                opacity: disabled && !hero ? 0 : 1
+                                borderColor: color
                             }}
                         >
                             {hero ? (
@@ -168,7 +95,6 @@ const BanSection = ({
     title,
     bannedHeroes,
     onSlotPress,
-    onSlotLongPress,
     ...props
 }: BanSectionProps) => {
     const { colors } = useTheme();
@@ -188,27 +114,16 @@ const BanSection = ({
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <View className="flex-row space-x-2">
                         {bannedHeroes.map((hero, idx) => {
-                            const disabled =
-                                (idx !== 0 && !bannedHeroes[idx - 1]) ||
-                                !!bannedHeroes[idx + 1];
                             return (
                                 <TouchableOpacity
                                     key={idx}
-                                    disabled={disabled}
-                                    onPress={() =>
-                                        !bannedHeroes[idx] &&
-                                        onSlotPress(idx, hero)
-                                    }
-                                    onLongPress={() => onSlotLongPress(idx)}
+                                    onPress={() => onSlotPress(idx, hero)}
                                     className="rounded-full border-[2px] justify-center items-center"
                                     style={{
                                         width: IMAGE_SIZE,
                                         height: IMAGE_SIZE,
-                                        display:
-                                            disabled && !hero ? "none" : "flex",
                                         borderColor: colors.text
                                     }}
-                                    delayLongPress={100}
                                 >
                                     {hero ? (
                                         <HeroImage
@@ -217,7 +132,7 @@ const BanSection = ({
                                         />
                                     ) : (
                                         <Icon
-                                            name={disabled ? "lock" : "add"}
+                                            name="add"
                                             size={IMAGE_SIZE * 0.8}
                                             color={colors.text}
                                         />
@@ -227,6 +142,70 @@ const BanSection = ({
                         })}
                     </View>
                 </ScrollView>
+            </View>
+        </View>
+    );
+};
+
+const RecBox = ({
+    title,
+    data,
+    onSlotPress,
+    excludedHeroes,
+    ...props
+}: RecBoxProps) => {
+    const { colors } = useTheme();
+
+    return (
+        <View {...props}>
+            <View
+                className="self-start ml-2 mb-[-4px] px-2 rounded z-10"
+                style={{ backgroundColor: colors.background }}
+            >
+                <Text>{title}</Text>
+            </View>
+            <View className="h-14 rounded-lg border flex-row px-2 pt-1">
+                <FlashList
+                    data={data.filter(
+                        item =>
+                            !excludedHeroes
+                                .map(excHero => excHero.id)
+                                .includes(Number(item[0]))
+                    )}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    estimatedItemSize={IMAGE_SIZE}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity
+                            onPress={() => onSlotPress(Number(item[0]), title)}
+                        >
+                            <View
+                                className="rounded-full border absolute top-1 left-0 z-20 justify-center items-center"
+                                style={{
+                                    width: BADGE_SIZE,
+                                    height: BADGE_SIZE,
+                                    backgroundColor: colors.background
+                                }}
+                            >
+                                <Text style={{ fontSize: BADGE_SIZE * 0.6 }}>
+                                    {item[1]}
+                                </Text>
+                            </View>
+                            <HeroImage
+                                heroId={Number(item[0])}
+                                size={IMAGE_SIZE}
+                                margin={4}
+                                /*imageStyle={{
+                                    opacity: excludedHeroes.some(
+                                        h => h.id === Number(item[0])
+                                    )
+                                        ? 0.3
+                                        : 1
+                                }}*/
+                            />
+                        </TouchableOpacity>
+                    )}
+                />
             </View>
         </View>
     );
@@ -259,6 +238,9 @@ const Draft = () => {
     );
     const [selectedHero, setSelectedHero] = useState<HeroType | null>(null);
     const [relationType, setRelationType] = useState<RelationType>("Combo");
+    const [heroToRemoveFrom, setHeroToRemoveFrom] = useState<
+        (HeroType | null)[]
+    >(Array(5).fill(null));
 
     useEffect(() => {
         getAllHeroes().then(setHeroes);
@@ -271,6 +253,10 @@ const Draft = () => {
             )
         );
     }, [heroes, blueTeam, redTeam, bannedHeroes]);
+
+    useEffect(() => {
+        setSelectedHero(null);
+    }, [excludedHeroes]);
 
     const updateMap = (
         target: HeroType[],
@@ -428,30 +414,14 @@ const Draft = () => {
 
     return (
         <Container className="space-y-4">
-            {/*<View className="flex-row justify-between space-x-4">
-                <IconButton
-                    name="refresh"
-                    onPress={handleResetDraft}
-                    variant="contained"
-                />
-                <IconButton name="settings" variant="contained" />
-            </View>*/}
-
             <Button title="Reset Draft" onPress={handleResetDraft} />
 
             <TeamSection
                 title="Your Picks"
                 team={blueTeam}
-                onSlotPress={(idx, hero) =>
-                    handleHeroToggle(blueTeam, setBlueTeam, idx, hero)
-                }
-                onSlotLongPress={async (idx, hero) => {
-                    setBlueTeam(prev => {
-                        const next = [...prev];
-                        next[idx] = null;
-                        return next;
-                    });
-                    await applyRelations(blueTeam, hero!, -1);
+                onSlotPress={(idx, hero) => {
+                    handleHeroToggle(blueTeam, setBlueTeam, idx, hero);
+                    setHeroToRemoveFrom(blueTeam);
                 }}
             />
 
@@ -464,16 +434,9 @@ const Draft = () => {
             <TeamSection
                 title="Enemy Picks"
                 team={redTeam}
-                onSlotPress={(idx, hero) =>
-                    handleHeroToggle(redTeam, setRedTeam, idx, hero)
-                }
-                onSlotLongPress={async (idx, hero) => {
-                    setRedTeam(prev => {
-                        const next = [...prev];
-                        next[idx] = null;
-                        return next;
-                    });
-                    await applyRelations(redTeam, hero!, -1);
+                onSlotPress={(idx, hero) => {
+                    handleHeroToggle(redTeam, setRedTeam, idx, hero);
+                    setHeroToRemoveFrom(redTeam);
                 }}
             />
 
@@ -481,23 +444,8 @@ const Draft = () => {
                 title="Banned Heroes"
                 bannedHeroes={bannedHeroes}
                 onSlotPress={(idx, hero) => {
-                    setShowHeroSelections(true);
-                    setOnSelect(() => async (selected: HeroType) => {
-                        setBannedHeroes(prev => {
-                            const next = [...prev];
-                            next[idx] = selected;
-                            return next;
-                        });
-                        setShowHeroSelections(false);
-                        setSelectionSearch("");
-                    });
-                }}
-                onSlotLongPress={idx => {
-                    setBannedHeroes(prev => {
-                        const next = [...prev];
-                        next[idx] = null;
-                        return next;
-                    });
+                    handleHeroToggle(bannedHeroes, setBannedHeroes, idx, hero);
+                    setHeroToRemoveFrom(bannedHeroes);
                 }}
             />
 
@@ -528,6 +476,37 @@ const Draft = () => {
                         setRelationType("Combo");
                     }}
                     onSelectRelationType={setRelationType}
+                    headerRight={
+                        excludedHeroes.find(
+                            item => item.id === selectedHero.id
+                        ) && (
+                            <Icon
+                                name="delete"
+                                color="error"
+                                onPress={async () => {
+                                    const tmp =
+                                        heroToRemoveFrom === blueTeam
+                                            ? setBlueTeam
+                                            : heroToRemoveFrom === redTeam
+                                            ? setRedTeam
+                                            : heroToRemoveFrom === bannedHeroes
+                                            ? setBannedHeroes
+                                            : null;
+                                    tmp?.(prev =>
+                                        prev.map(
+                                            hero =>
+                                                hero?.id === selectedHero?.id ? null : hero
+                                        )
+                                    );
+                                    await applyRelations(
+                                        heroToRemoveFrom,
+                                        selectedHero!,
+                                        -1
+                                    );
+                                }}
+                            />
+                        )
+                    }
                 />
             )}
 

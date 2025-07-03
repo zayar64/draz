@@ -1,3 +1,3 @@
 import * as SQLite from "expo-sqlite";
 
-export const db = SQLite.openDatabaseSync("mlbb.db");
+export const db = SQLite.openDatabaseSync("draz.db");

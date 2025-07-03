@@ -17,13 +17,15 @@ import {
 } from "react-native";
 
 import Text from "@/components/Text";
-import { api, myapi } from "@/apis"
+import { api, myapi } from "@/apis";
 
 interface GlobalContextType {
     loading: boolean;
     setLoading: (value: boolean) => void;
     globalMessage: string | null;
     setGlobalMessage: (value: string | null) => void;
+    loadingText: string;
+    setLoadingText: (value: string) => void;
 }
 
 const GlobalContext = createContext<GlobalContextType | null>(null);
@@ -37,7 +39,8 @@ export function useGlobal() {
 }
 
 export function GlobalProvider({ children }: { children?: ReactNode }) {
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [loadingText, setLoadingText] = useState<string>("");
     const [globalMessage, setGlobalMessage] = useState<string | null>(null);
 
     useEffect(() => {
@@ -53,15 +56,18 @@ export function GlobalProvider({ children }: { children?: ReactNode }) {
                 setLoading,
                 globalMessage,
                 setGlobalMessage,
+                loadingText,
+                setLoadingText
             }}
         >
             <Modal
                 transparent={true}
-                visible={loading}
+                visible={loading || !!loadingText}
                 onRequestClose={() => null}
             >
                 <View style={styles.backdrop}>
                     <ActivityIndicator size="large" color="#0af" />
+                    <Text>{loadingText}</Text>
                 </View>
             </Modal>
 

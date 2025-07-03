@@ -1,6 +1,5 @@
 import { db } from "../database";
-
-const name = "0001_initial";
+import { heroes, RELATION_TYPES } from "@/constants";
 
 export async function createTables() {
     try {
@@ -37,9 +36,73 @@ export async function createTables() {
     }
 }
 
+const createRelationTypes = async () => {
+    try {
+        for (const relationType of RELATION_TYPES) {
+            const relationTypeExist = await db.getFirstAsync(
+                "SELECT * FROM relation_type WHERE name = ?",
+                [relationType]
+            );
+            if (!relationTypeExist) {
+                await db.runAsync(
+                    "INSERT INTO relation_type (name) VALUES (?)",
+                    [relationType]
+                );
+            }
+        }
+    } catch (e: any) {
+        console.error("Error creating relation types:", e.message);
+    }
+};
+
+const insertHeroes = async () => {
+    try {
+        for (const hero of heroes) {
+            const heroExist = await db.getFirstAsync(
+                "SELECT * FROM hero WHERE id = ?",
+                [hero.id]
+            );
+
+            if (!heroExist) {
+                await db.runAsync("INSERT INTO hero (id, name) VALUES (?, ?)", [
+                    hero.id,
+                    hero.name
+                ]);
+            }
+        }
+    } catch (e: any) {
+        console.error("Error inserting heroes:", e.message);
+    }
+};
+
+const name = "0001_initial";
+const TOTAL_HERO_COUNT = heroes.length;
+
 export const initializeDatabase = async () => {
-  await createTables()
+    await createTables();
+
+    try {
+        const heroesCountInDb = (await db.getFirstAsync<{total_heroes: number}>(
+            "SELECT COUNT(id) AS total_heroes FROM hero"
+        ))?.total_heroes;
+
+        if (!heroesCountInDb || heroesCountInDb !== TOTAL_HERO_COUNT) {
+            if (!heroesCountInDb) await insertHeroes();
+            else {
+                for (const hero of heroes.slice(heroesCountInDb)) {
+                    await db.runAsync(
+                        "INSERT INTO hero (id, name) VALUES (?, ?)",
+                        [hero.id, hero.name]
+                    );
+                }
+            }
+        }
+    } catch (e: any) {
+        console.error(e);
+    }
+
     if (!(await db.getFirstAsync("SELECT * FROM migration"))) {
+        await createRelationTypes();
         await db.runAsync("INSERT INTO migration (name) VALUES (?)", [name]);
     }
 };

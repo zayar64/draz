@@ -8,8 +8,7 @@ import Confirm from "@/components/Confirm";
 import { HeroType, RelationType } from "@/types";
 
 export const RELATION_IMAGE_SIZE = 48;
-export const MODAL_CLASS_NAME =
-    "h-[90%] rounded-xl border m-4 p-4 space-y-4 flex-1";
+export const MODAL_CLASS_NAME = "h-[92%] rounded-xl border m-4 p-4 space-y-4";
 
 const HeroRelationsModal = ({
     visible,
@@ -44,7 +43,11 @@ const HeroRelationsModal = ({
     ];
 
     return (
-        <Modal transparent visible={visible} onRequestClose={onClose}>
+        <Modal
+            transparent
+            visible={visible}
+            onRequestClose={onClose}
+        >
             <View style={modalStyle} className={MODAL_CLASS_NAME}>
                 <View className="flex-row items-center space-x-4 mb-[6px]">
                     <Icon name="arrow-back-ios" onPress={onClose} />

@@ -1,4 +1,5 @@
 export const heroImageMapping: Record<number, any> = {
+    129: require("../assets/images/hero_images/129.png"),
     128: require("../assets/images/hero_images/128.png"),
     127: require("../assets/images/hero_images/127.png"),
     126: require("../assets/images/hero_images/126.png"),

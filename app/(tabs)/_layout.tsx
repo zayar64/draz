@@ -34,6 +34,11 @@ export default function TabsLayout() {
                 name: "draft",
                 iconName: "sword-cross",
                 iconSrc: "materialCom"
+            },
+            {
+                title: "Menu",
+                name: "menu",
+                iconName: "menu"
             }
         ],
         [router]

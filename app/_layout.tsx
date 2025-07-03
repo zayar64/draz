@@ -7,13 +7,13 @@ import { SplashScreen, Stack, useLocalSearchParams } from "expo-router";
 import { PaperProvider } from "react-native-paper";
 
 import { GlobalProvider, ThemeProvider } from "@/contexts";
-import { db, migrationMapping, initializeDatabase } from "@/database";
+import { initializeDatabase } from "@/database";
 
 SplashScreen.preventAutoHideAsync();
 
 const RootLayout = () => {
     const [fontsLoaded, error] = useFonts({
-        "Poppins-Black": require("@/assets/fonts/Poppins-Black.ttf"),
+        /*"Poppins-Black": require("@/assets/fonts/Poppins-Black.ttf"),
         "Poppins-Bold": require("@/assets/fonts/Poppins-Bold.ttf"),
         "Poppins-ExtraBold": require("@/assets/fonts/Poppins-ExtraBold.ttf"),
         "Poppins-ExtraLight": require("@/assets/fonts/Poppins-ExtraLight.ttf"),
@@ -21,9 +21,16 @@ const RootLayout = () => {
         "Poppins-Medium": require("@/assets/fonts/Poppins-Medium.ttf"),
         "Poppins-Regular": require("@/assets/fonts/Poppins-Regular.ttf"),
         "Poppins-SemiBold": require("@/assets/fonts/Poppins-SemiBold.ttf"),
-        "Poppins-Thin": require("@/assets/fonts/Poppins-Thin.ttf")
+        "Poppins-Thin": require("@/assets/fonts/Poppins-Thin.ttf")*/
     });
     const [dbChecked, setDbChecked] = useState<boolean>(false);
+
+    useEffect(() => {
+        (async () => {
+            await initializeDatabase();
+            setDbChecked(true);
+        })();
+    }, []);
 
     useEffect(() => {
         if (error) console.error(error);
@@ -32,36 +39,13 @@ const RootLayout = () => {
             SplashScreen.hideAsync();
         }
     }, [fontsLoaded, error]);
+    
+    if (!fontsLoaded) return
 
-    useEffect(() => {
-        (async () => {
-            try {
-                await initializeDatabase();
-
-                const migrations = (
-                    await db.getAllAsync<{name: string}>("SELECT name FROM migration")
-                ).map(m => m.name);
-
-                for (const [migrationName, migrationFunc] of Object.entries(
-                    migrationMapping
-                )) {
-                    if (!migrations.includes(migrationName)) {
-                        await migrationFunc();
-                    }
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                setDbChecked(true);
-            }
-        })();
-    }, []);
-
-    if (!fontsLoaded || !dbChecked) {
-        return (
+    if (!dbChecked) return (
             <Modal
                 transparent={true}
-                visible={!dbChecked}
+                visible
                 onRequestClose={() => null}
             >
                 <View
@@ -75,11 +59,10 @@ const RootLayout = () => {
                     <ActivityIndicator size="large" color="#0af" />
                     <Text style={{
                       color: "#fff"
-                    }}>Initializing Database</Text>
+                    }}>Checking Heroes</Text>
                 </View>
             </Modal>
         );
-    }
 
     return (
         <ThemeProvider>

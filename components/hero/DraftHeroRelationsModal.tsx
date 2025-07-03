@@ -14,13 +14,15 @@ const HeroRelationsModal = ({
     hero,
     relationType,
     onClose,
-    onSelectRelationType
+    onSelectRelationType,
+    headerRight
 }: {
     visible: boolean;
     hero: any;
     relationType: RelationType;
     onClose: () => void;
     onSelectRelationType: (type: RelationType) => void;
+    headerRight?: React.ReactNode;
 }) => {
     const { colors } = useTheme();
     const modalStyle = {
@@ -28,17 +30,27 @@ const HeroRelationsModal = ({
     };
 
     const data: HeroType[] = (hero.relations?.[relationType] || []).sort(
-        (firstHero: HeroType, secondHero : HeroType) =>
+        (firstHero: HeroType, secondHero: HeroType) =>
             (firstHero.name || "").localeCompare(secondHero.name || "")
     );
 
     return (
         <Modal transparent visible={visible} onRequestClose={onClose}>
             <View style={modalStyle} className={MODAL_CLASS_NAME}>
-                <View className="flex-row items-center space-x-4 mb-[6px]">
-                    <Icon name="arrow-back-ios" onPress={onClose} />
-                    <HeroImage heroId={hero.id} size={64} />
-                    <Text variant="header">{hero.name}</Text>
+                <View className="flex-row justify-between items-center">
+                    <View className="flex-row items-center space-x-2 mb-[6px]">
+                        <Icon name="arrow-back-ios" onPress={onClose} />
+                        <HeroImage heroId={hero.id} size={50} />
+                        <Text variant="body" numberOfLines={1} className="w-40">
+                            {hero.name}
+                        </Text>
+                    </View>
+                    
+                    {headerRight ? (
+                        <View>{headerRight}</View>
+                    ) : (
+                        <View className="w-10" />
+                    )}
                 </View>
 
                 <View className="rounded-md border-[2px] overflow-hidden flex-row justify-evenly">

@@ -2,7 +2,7 @@ import * as FileSystem from "expo-file-system";
 import * as DocumentPicker from "expo-document-picker";
 import * as Sharing from "expo-sharing";
 
-const dbPath = `${FileSystem.documentDirectory}SQLite/mlbb.db`;
+const dbPath = `${FileSystem.documentDirectory}SQLite/draz.db`;
 
 const uploadDb = async (source: string) => {
     console.log("Checking file existence...");
