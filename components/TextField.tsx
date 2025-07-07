@@ -43,7 +43,7 @@ const TextField = forwardRef<any, TextFieldProps>(
                     multiline
                         ? { paddingVertical: 12, lineHeight: 24 }
                         : { height: 32 },
-                    style
+                    style,
                 ]}
                 contentStyle={{
                     color: colors.text,

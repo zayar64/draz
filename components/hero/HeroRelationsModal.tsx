@@ -1,5 +1,11 @@
-import React from "react";
-import { Modal, TouchableOpacity } from "react-native";
+import React, { useMemo, useEffect } from "react";
+import {
+    Modal,
+    TouchableOpacity,
+    PanResponder,
+    GestureResponderEvent,
+    PanResponderGestureState
+} from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { View, Text, Icon, HeroImage } from "@/components";
 import { increaseHexIntensity } from "@/utils";
@@ -10,24 +16,24 @@ import { HeroType, RelationType } from "@/types";
 export const RELATION_IMAGE_SIZE = 48;
 export const MODAL_CLASS_NAME = "h-[92%] rounded-xl border m-4 p-4 space-y-4";
 
+const SWIPE_THRESHOLD = 50;
+
 const HeroRelationsModal = ({
     visible,
     hero,
     relationType,
     onClose,
-    onSelectRelationType,
+    setRelationType,
     onPressAdd,
-    onPressHero,
-    onLongPressHero
+    onPressHero
 }: {
     visible: boolean;
     hero: any;
     relationType: RelationType;
     onClose: () => void;
-    onSelectRelationType: (type: RelationType) => void;
+    setRelationType: (type: RelationType) => void;
     onPressAdd: () => void;
     onPressHero: (h: any) => void;
-    onLongPressHero: (h: any) => void;
 }) => {
     const { colors } = useTheme();
     const modalStyle = {
@@ -37,49 +43,83 @@ const HeroRelationsModal = ({
     const data: (HeroType | null)[] = [
         null,
         ...(hero.relations?.[relationType] || []).sort(
-            (firstHero: HeroType, secondHero: HeroType) =>
-                (firstHero.name || "").localeCompare(secondHero.name || "")
+            (a: HeroType, b: HeroType) =>
+                (a.name || "").localeCompare(b.name || "")
         )
     ];
 
+    const relations = [
+        { name: "Combo", colorRepresentation: "#50e750" },
+        { name: "Weak Vs", colorRepresentation: "#f42828" },
+        { name: "Strong Vs", colorRepresentation: "#f38726" }
+    ];
+
+    const handleSwipeLeft = () => {
+        const currentIndex = relations.findIndex(
+            item => item.name === relationType
+        );
+        const newIndex = Math.max(0, currentIndex - 1);
+        setRelationType(relations[newIndex].name as RelationType);
+    };
+
+    const handleSwipeRight = () => {
+        const currentIndex = relations.findIndex(
+            item => item.name === relationType
+        );
+        const newIndex = Math.min(relations.length - 1, currentIndex + 1);
+        setRelationType(relations[newIndex].name as RelationType);
+    };
+
+    const panResponder = useMemo(
+        () =>
+            PanResponder.create({
+                onStartShouldSetPanResponder: () => true,
+                onMoveShouldSetPanResponder: () => true,
+                onPanResponderRelease: (
+                    _evt: GestureResponderEvent,
+                    gestureState: PanResponderGestureState
+                ) => {
+                    if (gestureState.dx > SWIPE_THRESHOLD) {
+                        handleSwipeLeft();
+                    } else if (gestureState.dx < -SWIPE_THRESHOLD) {
+                        handleSwipeRight();
+                    }
+                }
+            }),
+        [relationType]
+    );
+
     return (
-        <Modal
-            transparent
-            visible={visible}
-            onRequestClose={onClose}
-        >
+        <Modal transparent visible={visible} onRequestClose={onClose}>
             <View style={modalStyle} className={MODAL_CLASS_NAME}>
                 <View className="flex-row items-center space-x-4 mb-[6px]">
                     <Icon name="arrow-back-ios" onPress={onClose} />
                     <HeroImage heroId={hero.id} size={64} />
                     <Text variant="header">{hero.name}</Text>
                 </View>
-
                 <View className="rounded-md border-[2px] overflow-hidden flex-row justify-evenly">
-                    {["Combo", "Weak Vs", "Strong Vs"].map(type => (
+                    {relations.map(({ name, colorRepresentation }) => (
                         <TouchableOpacity
-                            key={type}
+                            key={name}
                             onPress={() =>
-                                onSelectRelationType(type as RelationType)
+                                setRelationType(name as RelationType)
                             }
                             style={{
                                 backgroundColor:
-                                    type === relationType
-                                        ? colors.primary
+                                    name === relationType
+                                        ? colorRepresentation
                                         : undefined,
                                 width: "33.33%",
                                 borderColor: colors.border
                             }}
                             className="border-x justify-center items-center p-2"
                         >
-                            <Text variant="body">{type}</Text>
+                            <Text variant="body">{name}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
-
                 <View />
-
-                <View className="flex-1">
+                <View className="flex-1" {...panResponder.panHandlers}>
                     <FlashList
                         data={data}
                         renderItem={({ item }) =>
@@ -100,15 +140,13 @@ const HeroRelationsModal = ({
                             ) : (
                                 <TouchableOpacity
                                     key={item.id}
-                                    onPress={() => onPressHero(item)}
-                                    onLongPress={() =>
+                                    onPress={() =>
                                         Confirm(
                                             "",
                                             `Are you sure to remove ${item.name}?`,
-                                            () => onLongPressHero(item)
+                                            () => onPressHero(item)
                                         )
                                     }
-                                    delayLongPress={300}
                                 >
                                     <HeroImage
                                         heroId={item.id}

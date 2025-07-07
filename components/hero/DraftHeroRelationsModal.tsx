@@ -1,5 +1,11 @@
-import React from "react";
-import { Modal, TouchableOpacity } from "react-native";
+import React, { useMemo, useEffect } from "react";
+import {
+    Modal,
+    TouchableOpacity,
+    PanResponder,
+    GestureResponderEvent,
+    PanResponderGestureState
+} from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { View, Text, Icon, HeroImage } from "@/components";
 import { increaseHexIntensity } from "@/utils";
@@ -7,22 +13,26 @@ import { useTheme } from "@/contexts";
 import Confirm from "@/components/Confirm";
 import { HeroType, RelationType } from "@/types";
 
-import { RELATION_IMAGE_SIZE, MODAL_CLASS_NAME } from "./HeroRelationsModal";
+export const RELATION_IMAGE_SIZE = 48;
+export const MODAL_CLASS_NAME = "h-[92%] rounded-xl border m-4 p-4 space-y-4";
+
+const SWIPE_THRESHOLD = 50;
 
 const HeroRelationsModal = ({
     visible,
     hero,
     relationType,
     onClose,
-    onSelectRelationType,
+    setRelationType,
     headerRight
 }: {
     visible: boolean;
     hero: any;
     relationType: RelationType;
     onClose: () => void;
-    onSelectRelationType: (type: RelationType) => void;
-    headerRight?: React.ReactNode;
+    setRelationType: (type: RelationType) => void;
+
+    headerRight: React.ReactNode;
 }) => {
     const { colors } = useTheme();
     const modalStyle = {
@@ -30,8 +40,48 @@ const HeroRelationsModal = ({
     };
 
     const data: HeroType[] = (hero.relations?.[relationType] || []).sort(
-        (firstHero: HeroType, secondHero: HeroType) =>
-            (firstHero.name || "").localeCompare(secondHero.name || "")
+        (a: HeroType, b: HeroType) => (a.name || "").localeCompare(b.name || "")
+    );
+
+    const relations = [
+        { name: "Combo", colorRepresentation: "#50e750" },
+        { name: "Weak Vs", colorRepresentation: "#f42828" },
+        { name: "Strong Vs", colorRepresentation: "#f38726" }
+    ];
+
+    const handleSwipeLeft = () => {
+        const currentIndex = relations.findIndex(
+            item => item.name === relationType
+        );
+        const newIndex = Math.max(0, currentIndex - 1);
+        setRelationType(relations[newIndex].name as RelationType);
+    };
+
+    const handleSwipeRight = () => {
+        const currentIndex = relations.findIndex(
+            item => item.name === relationType
+        );
+        const newIndex = Math.min(relations.length - 1, currentIndex + 1);
+        setRelationType(relations[newIndex].name as RelationType);
+    };
+
+    const panResponder = useMemo(
+        () =>
+            PanResponder.create({
+                onStartShouldSetPanResponder: () => true,
+                onMoveShouldSetPanResponder: () => true,
+                onPanResponderRelease: (
+                    _evt: GestureResponderEvent,
+                    gestureState: PanResponderGestureState
+                ) => {
+                    if (gestureState.dx > SWIPE_THRESHOLD) {
+                        handleSwipeLeft();
+                    } else if (gestureState.dx < -SWIPE_THRESHOLD) {
+                        handleSwipeRight();
+                    }
+                }
+            }),
+        [relationType]
     );
 
     return (
@@ -45,7 +95,7 @@ const HeroRelationsModal = ({
                             {hero.name}
                         </Text>
                     </View>
-                    
+
                     {headerRight ? (
                         <View>{headerRight}</View>
                     ) : (
@@ -54,30 +104,28 @@ const HeroRelationsModal = ({
                 </View>
 
                 <View className="rounded-md border-[2px] overflow-hidden flex-row justify-evenly">
-                    {["Combo", "Weak Vs", "Strong Vs"].map(type => (
+                    {relations.map(({ name, colorRepresentation }) => (
                         <TouchableOpacity
-                            key={type}
+                            key={name}
                             onPress={() =>
-                                onSelectRelationType(type as RelationType)
+                                setRelationType(name as RelationType)
                             }
                             style={{
                                 backgroundColor:
-                                    type === relationType
-                                        ? colors.primary
+                                    name === relationType
+                                        ? colorRepresentation
                                         : undefined,
                                 width: "33.33%",
                                 borderColor: colors.border
                             }}
                             className="border-x justify-center items-center p-2"
                         >
-                            <Text variant="body">{type}</Text>
+                            <Text variant="body">{name}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
-
                 <View />
-
-                <View className="flex-1">
+                <View className="flex-1" {...panResponder.panHandlers}>
                     <FlashList
                         data={data}
                         renderItem={({ item }) => (
@@ -85,7 +133,6 @@ const HeroRelationsModal = ({
                                 heroId={item.id}
                                 size={RELATION_IMAGE_SIZE}
                                 name={item.name}
-                                key={item.id}
                             />
                         )}
                         showsVerticalScrollIndicator={false}

@@ -1,5 +1,6 @@
 import React from "react";
 import { Modal, TouchableOpacity } from "react-native";
+import { TextInput } from "react-native-paper";
 import { FlashList } from "@shopify/flash-list";
 import { View, Text, Icon, HeroImage, TextField, Confirm } from "@/components";
 import { increaseHexIntensity, reduceHexAlpha } from "@/utils";
@@ -7,11 +8,7 @@ import { useTheme } from "@/contexts";
 
 import { HeroType, RelationType } from "@/types";
 
-import {
-    
-    RELATION_IMAGE_SIZE,
-    MODAL_CLASS_NAME
-} from "./HeroRelationsModal";
+import { RELATION_IMAGE_SIZE, MODAL_CLASS_NAME } from "./HeroRelationsModal";
 
 const HeroSelectionModal = ({
     visible,
@@ -37,16 +34,13 @@ const HeroSelectionModal = ({
     return (
         <Modal transparent visible={visible} onRequestClose={onClose}>
             <View style={modalStyle} className={MODAL_CLASS_NAME}>
-                <View className="flex-row items-center space-x-4">
+                <View className="flex-row items-center space-x-2 my-2">
                     <Icon name="arrow-back-ios" onPress={onClose} />
-                </View>
 
-                <View className="flex-row items-center space-x-2">
                     <TextField
                         value={search}
                         onChangeText={onChangeSearch}
-                        className="grow"
-                        label="Search Hero"
+                        className="flex-1"
                     />
                     {search && (
                         <Icon
@@ -56,8 +50,6 @@ const HeroSelectionModal = ({
                         />
                     )}
                 </View>
-
-                <View />
 
                 <View className="flex-1 h-[80%]">
                     <FlashList

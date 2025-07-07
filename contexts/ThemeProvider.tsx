@@ -41,7 +41,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
             success: "#2bb741",
             error: { light: "#ff0000", dark: "#ff0000" },
 
-            background: { light: "#e7e6e6", dark: "#161920" },
+            background: { light: "#edf0f0", dark: "#161920" },
+            //background: { light: "#edf0f0", dark: "#2c2e38" },
             text: { light: "#000000", dark: "#FFFFFF" },
             border: { light: "#000000", dark: "#ddd4d4" }
         };

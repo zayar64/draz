@@ -6,10 +6,7 @@ import { increaseHexIntensity, reduceHexAlpha } from "@/utils";
 import { useTheme } from "@/contexts";
 import { HeroType, RelationType } from "@/types";
 
-import {
-    RELATION_IMAGE_SIZE,
-    MODAL_CLASS_NAME
-} from "./HeroRelationsModal";
+import { RELATION_IMAGE_SIZE, MODAL_CLASS_NAME } from "./HeroRelationsModal";
 
 const HeroSelectionModal = ({
     visible,

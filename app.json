@@ -2,7 +2,7 @@
     "expo": {
         "name": "Draz",
         "slug": "draz",
-        "version": "1.3.0",
+        "version": "1.3.5",
         "orientation": "portrait",
         "icon": "./assets/images/draz.png",
         "userInterfaceStyle": "automatic",
@@ -17,9 +17,9 @@
                 "backgroundColor": "#161920"
             },
             "permissions": [
-                "android.permission.READ_EXTERNAL_STORAGE",
+                /*"android.permission.READ_EXTERNAL_STORAGE",
                 "android.permission.WRITE_EXTERNAL_STORAGE",
-                "android.permission.INTERNET"
+                "android.permission.INTERNET"*/
             ],
             "package": "com.zytech.draz"
         },

@@ -9,7 +9,7 @@ import {
     TouchableWithoutFeedback,
     Keyboard
 } from "react-native";
-import { useRouter } from "expo-router"
+import { useRouter } from "expo-router";
 
 import { FlashList } from "@shopify/flash-list";
 import {
@@ -60,7 +60,7 @@ function Home() {
 
     const { setLoading } = useGlobal();
     const { colors } = useTheme();
-    const router = useRouter()
+    const router = useRouter();
 
     const modalStyle: StyleProp<ViewStyle> = useMemo(
         () => ({
@@ -214,17 +214,21 @@ function Home() {
                 onPress={Keyboard.dismiss}
                 accessible={false}
             >
-                <Container style={{ paddingHorizontal: 0 }}>
+                <View
+                    style={{
+                        backgroundColor: colors.background,
+                        flex: 1
+                    }}
+                >
                     {selectedHero && (
                         <HeroRelationsModal
                             visible={!!selectedHero}
                             hero={selectedHero}
                             relationType={relationType}
                             onClose={handleResetRelations}
-                            onSelectRelationType={setRelationType}
+                            setRelationType={setRelationType}
                             onPressAdd={() => setShowHeroSelections(true)}
-                            onPressHero={handleChangeSelectedHero}
-                            onLongPressHero={handleDeleteHeroRelation}
+                            onPressHero={handleDeleteHeroRelation}
                         />
                     )}
 
@@ -248,13 +252,14 @@ function Home() {
                     )}
 
                     {/* Search Bar */}
-                    <View className="flex-row items-center px-4 my-4 space-x-2">
+                    <View className="flex-row items-center p-4 space-x-2 border-b">
+                        <Icon name="search" />
+
                         <TextField
                             value={search}
                             onChangeText={setSearch}
                             className="flex-1"
-                            label="Search Hero"
-                            onEndEditing={() => search === "open menu" && router.push("/menu")}
+                            //label="Search Hero"
                         />
                         {search && (
                             <Icon
@@ -275,7 +280,7 @@ function Home() {
                         estimatedItemSize={100}
                         keyboardShouldPersistTaps="handled"
                     />
-                </Container>
+                </View>
             </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
     );

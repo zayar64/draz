@@ -102,8 +102,8 @@ export default function Menu() {
                         ),
                     icon: "delete",
                     color: "red"
-                }
-                /*{
+                }/*,
+                {
                     label: "Download Data",
                     onPress: () => execAsync(downloadDb),
                     icon: "download"
@@ -123,7 +123,7 @@ export default function Menu() {
                     onPress: toggleMode,
                     icon: `${mode}-mode`,
                     iconSrc: "material"
-                },
+                }
                 /*{
                     label: "Terminal",
                     onPress: () => navigate("/sqlite-terminal"),
@@ -161,9 +161,7 @@ export default function Menu() {
                                                 ? (item?.iconSrc as IconType)
                                                 : "materialCom"
                                         }
-                                        style={{
-                                            color: item.color || colors.text
-                                        }}
+                                        color={item.color}
                                     />
                                     <Text
                                         className="ml-3"
