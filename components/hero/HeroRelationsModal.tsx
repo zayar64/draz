@@ -119,7 +119,7 @@ const HeroRelationsModal = ({
                     ))}
                 </View>
                 <View />
-                <View className="flex-1" {...panResponder.panHandlers}>
+                <View className="flex-1">
                     <FlashList
                         data={data}
                         renderItem={({ item }) =>

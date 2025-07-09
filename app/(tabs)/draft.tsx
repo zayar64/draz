@@ -60,6 +60,16 @@ const Draft = () => {
         );
     }, [heroes, blueTeam, redTeam, bannedHeroes]);
 
+    const availableHeroes = useMemo(
+        () =>
+            heroes.filter(
+                h =>
+                    !excludedHeroes.some(e => e.id === h.id) &&
+                    h.name.toLowerCase().includes(selectionSearch.toLowerCase())
+            ),
+        [heroes, blueTeam, redTeam, bannedHeroes, selectionSearch]
+    );
+
     useEffect(() => {
         setSelectedHero(null);
     }, [excludedHeroes]);
@@ -221,11 +231,7 @@ const Draft = () => {
     return (
         <Container className="space-y-4">
             <View className="flex-row space-x-4 justify-between">
-                <Icon
-                    name="refresh"
-                    onPress={handleResetDraft}
-                    size="large"
-                />
+                <Icon name="refresh" onPress={handleResetDraft} size="large" />
 
                 {/*<Icon
                     name="save"
@@ -342,13 +348,7 @@ const Draft = () => {
                         setShowHeroSelections(false);
                         setSelectionSearch("");
                     }}
-                    availableHeroes={heroes.filter(
-                        h =>
-                            !excludedHeroes.some(e => e.id === h.id) &&
-                            h.name
-                                .toLowerCase()
-                                .includes(selectionSearch.toLowerCase())
-                    )}
+                    availableHeroes={availableHeroes}
                     onSelect={hero => onSelect && onSelect(hero)}
                 />
             )}
