@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { TouchableOpacity, ScrollView } from "react-native";
+import { Alert, TouchableOpacity, ScrollView } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 
 import { Container, View, Text, Icon, IconButton, Button } from "@/components";
@@ -47,6 +47,8 @@ const Draft = () => {
     const [heroToRemoveFrom, setHeroToRemoveFrom] = useState<
         (HeroType | null)[]
     >(Array(5).fill(null));
+
+    const { colors } = useTheme();
 
     useEffect(() => {
         getAllHeroes().then(setHeroes);
@@ -233,18 +235,23 @@ const Draft = () => {
             <View className="flex-row space-x-4 justify-between">
                 <Icon name="refresh" onPress={handleResetDraft} size="large" />
 
-                {/*<Icon
+                <Icon
                     name="save"
-                    onPress={handleResetDraft}
+                    onPress={() =>
+                        Alert.alert(
+                            "Notice",
+                            "Only premium users can access this feature"
+                        )
+                    }
                     size="large"
-                    disabled={
+                    /*disabled={
                         !blueTeam.every(item => item) ||
                         !redTeam.every(item => item)
-                    }
-                />*/}
+                    }*/
+                />
             </View>
 
-            <View className="border-b" />
+            {/*<View className="border-b" />*/}
 
             <TeamSection
                 title="Your Picks"
@@ -257,7 +264,24 @@ const Draft = () => {
 
             <View />
 
-            <Text className="text-center text-2xl font-bold italic">VS</Text>
+            <View className="flex-row justify-center items-center">
+                <Text
+                    className="text-3xl font-bold pb-1"
+                    style={{
+                        color: colors.primary
+                    }}
+                >
+                    V
+                </Text>
+                <Text
+                    className="text-3xl font-bold pt-1"
+                    style={{
+                        color: colors.error
+                    }}
+                >
+                    S
+                </Text>
+            </View>
 
             <TeamSection
                 title="Enemy Picks"

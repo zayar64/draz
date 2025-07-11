@@ -89,7 +89,10 @@ const HeroRelationsModal = ({
             <View style={modalStyle} className={MODAL_CLASS_NAME}>
                 <View className="flex-row justify-between items-center">
                     <View className="flex-row items-center space-x-2 mb-[6px]">
-                        <Icon name="arrow-back-ios" onPress={onClose} />
+                        <Icon
+                            name="arrow-back-ios"
+                            onPress={onClose}
+                        />
                         <HeroImage heroId={hero.id} size={50} />
                         <Text variant="body" numberOfLines={1} className="w-40">
                             {hero.name}
@@ -103,28 +106,44 @@ const HeroRelationsModal = ({
                     )}
                 </View>
 
-                <View className="rounded-md border-[2px] overflow-hidden flex-row justify-evenly">
-                    {relations.map(({ name, colorRepresentation }) => (
-                        <TouchableOpacity
-                            key={name}
-                            onPress={() =>
-                                setRelationType(name as RelationType)
-                            }
+                {headerRight ? (
+                    <View className="rounded-md border-[2px] overflow-hidden flex-row justify-evenly">
+                        {relations.map(({ name, colorRepresentation }) => (
+                            <TouchableOpacity
+                                key={name}
+                                onPress={() =>
+                                    setRelationType(name as RelationType)
+                                }
+                                style={{
+                                    backgroundColor:
+                                        name === relationType
+                                            ? colorRepresentation
+                                            : undefined,
+                                    width: "33.33%",
+                                    borderColor: colors.border
+                                }}
+                                className="border-x justify-center items-center p-2"
+                            >
+                                <Text variant="body">{name}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                ) : (
+                    <View className="flex-row justify-center items-center">
+                        <View className="border-b w-full" />
+                        <Text
+                            className="absolute m-[-8px] px-2"
                             style={{
-                                backgroundColor:
-                                    name === relationType
-                                        ? colorRepresentation
-                                        : undefined,
-                                width: "33.33%",
-                                borderColor: colors.border
+                                backgroundColor: modalStyle.backgroundColor
                             }}
-                            className="border-x justify-center items-center p-2"
                         >
-                            <Text variant="body">{name}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                            {relationType}
+                        </Text>
+                    </View>
+                )}
+
                 <View />
+
                 <View className="flex-1">
                     <FlashList
                         data={data}

@@ -79,7 +79,7 @@ export default function Menu() {
         }[];
     }[] = [
         {
-            title: "Data Mamagement",
+            title: "Data Management",
             items: [
                 {
                     label: "Add All Pre-defined Heroes Relation",
