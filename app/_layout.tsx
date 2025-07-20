@@ -57,9 +57,6 @@ const RootLayout = () => {
                     }}
                 >
                     <ActivityIndicator size="large" color="#0af" />
-                    <Text style={{
-                      color: "#fff"
-                    }}>Checking Heroes</Text>
                 </View>
             </Modal>
         );
