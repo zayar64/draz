@@ -38,7 +38,6 @@ const Draft = () => {
     });
 
     const [showHeroSelections, setShowHeroSelections] = useState(false);
-    const [selectionSearch, setSelectionSearch] = useState("");
     const [onSelect, setOnSelect] = useState<null | ((hero: HeroType) => void)>(
         null
     );
@@ -66,10 +65,9 @@ const Draft = () => {
         () =>
             heroes.filter(
                 h =>
-                    !excludedHeroes.some(e => e.id === h.id) &&
-                    h.name.toLowerCase().includes(selectionSearch.toLowerCase())
+                    !excludedHeroes.some(e => e.id === h.id)
             ),
-        [heroes, blueTeam, redTeam, bannedHeroes, selectionSearch]
+        [heroes, blueTeam, redTeam, bannedHeroes]
     );
 
     useEffect(() => {
@@ -168,7 +166,6 @@ const Draft = () => {
                     return next;
                 });
                 setShowHeroSelections(false);
-                setSelectionSearch("");
                 if (team === blueTeam || team === redTeam) {
                     await applyRelations(team, selected, 1);
                 }
@@ -366,13 +363,10 @@ const Draft = () => {
             {showHeroSelections && (
                 <DraftHeroSelectionModal
                     visible
-                    search={selectionSearch}
-                    onChangeSearch={setSelectionSearch}
                     onClose={() => {
                         setShowHeroSelections(false);
-                        setSelectionSearch("");
                     }}
-                    availableHeroes={availableHeroes}
+                    heroes={availableHeroes}
                     onSelect={hero => onSelect && onSelect(hero)}
                 />
             )}

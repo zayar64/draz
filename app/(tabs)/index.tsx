@@ -55,7 +55,6 @@ function Home() {
     );
     const [selectedHero, setSelectedHero] = useState<HeroType | null>(null);
     const [search, setSearch] = useState("");
-    const [selectionSearch, setSelectionSearch] = useState("");
     const [showHeroSelections, setShowHeroSelections] = useState(false);
 
     const { setLoading } = useGlobal();
@@ -120,7 +119,6 @@ function Home() {
                 refreshRelations(target)
             ]);
             updateHeroesState(selectedHero, target);
-            setSelectionSearch("");
         },
         [relationType, refreshRelations, updateHeroesState, selectedHero]
     );
@@ -194,17 +192,6 @@ function Home() {
         []
     );
 
-    // Selection data
-    const availableSelections = useMemo(
-        () =>
-            heroes
-                .filter(h => h.id !== selectedHero?.id)
-                .filter(h =>
-                    h.name.toLowerCase().includes(selectionSearch.toLowerCase())
-                ),
-        [heroes, selectedHero, selectionSearch]
-    );
-
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -222,7 +209,7 @@ function Home() {
                 >
                     {selectedHero && (
                         <HeroRelationsModal
-                            visible={!!selectedHero}
+                            visible={true}
                             hero={selectedHero}
                             relationType={relationType}
                             onClose={handleResetRelations}
@@ -234,15 +221,12 @@ function Home() {
 
                     {selectedHero && showHeroSelections && (
                         <HeroSelectionModal
-                            visible={!!selectedHero && showHeroSelections}
+                            visible={true}
                             selectedHero={selectedHero}
-                            search={selectionSearch}
-                            onChangeSearch={setSelectionSearch}
                             onClose={() => {
                                 setShowHeroSelections(false);
-                                setSelectionSearch("");
                             }}
-                            selections={availableSelections}
+                            heroes={heroes.filter(hero => hero.id !== selectedHero.id)}
                             onSelect={async hero => {
                                 await handleAddHeroRelation(hero);
                                 setShowHeroSelections(false);
@@ -261,11 +245,10 @@ function Home() {
                             className="flex-1"
                             //label="Search Hero"
                             onEndEditing={() => {
-                                if (search === "go to terminal")
-                                    {
-                                      setSearch("")
-                                      router.push("/sqlite-terminal");
-                                    }
+                                if (search === "go to terminal") {
+                                    setSearch("");
+                                    router.push("/sqlite-terminal");
+                                }
                             }}
                         />
                         {search && (

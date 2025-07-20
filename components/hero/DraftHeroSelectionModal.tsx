@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Modal, TouchableOpacity } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { View, Icon, HeroImage } from "@/components";
@@ -10,19 +10,16 @@ import { RELATION_IMAGE_SIZE, MODAL_CLASS_NAME } from "./HeroRelationsModal";
 
 const HeroSelectionModal = ({
     visible,
-    search,
-    onChangeSearch,
     onClose,
-    availableHeroes,
+    heroes,
     onSelect
 }: {
     visible: boolean;
-    search: string;
-    onChangeSearch: (text: string) => void;
     onClose: () => void;
-    availableHeroes: HeroType[];
+    heroes: HeroType[];
     onSelect: (hero: HeroType) => void;
 }) => {
+  const [search, setSearch] = useState<string>("")
     const { colors } = useTheme();
 
     // Memoize modal style to prevent re-renders
@@ -62,6 +59,13 @@ const HeroSelectionModal = ({
         }),
         []
     );
+    
+    const filteredHeroes = useMemo(() => {
+        const lowerCaseSearch = search.toLowerCase();
+        return heroes.filter(h =>
+            h.name.toLowerCase().startsWith(lowerCaseSearch)
+        );
+    }, [heroes, search]);
 
     return (
         <Modal transparent visible={visible} onRequestClose={onClose}>
@@ -70,20 +74,20 @@ const HeroSelectionModal = ({
                     <Icon name="arrow-back-ios" onPress={onClose} />
                     <TextField
                         value={search}
-                        onChangeText={onChangeSearch}
+                        onChangeText={setSearch}
                         className="flex-1"
                     />
                     {search.length > 0 && (
                         <Icon
                             name="clear"
                             size="large"
-                            onPress={() => onChangeSearch("")}
+                            onPress={() => setSearch("")}
                         />
                     )}
                 </View>
                 <View className="flex-1 h-[80%]">
                     <FlashList
-                        data={availableHeroes}
+                        data={filteredHeroes}
                         keyExtractor={keyExtractor}
                         renderItem={renderItem}
                         estimatedItemSize={RELATION_IMAGE_SIZE + 8}

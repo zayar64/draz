@@ -14,7 +14,7 @@ import Confirm from "@/components/Confirm";
 import { HeroType, RelationType } from "@/types";
 
 export const RELATION_IMAGE_SIZE = 48;
-export const MODAL_CLASS_NAME = "h-[92%] rounded-xl border m-4 p-4 space-y-4";
+export const MODAL_CLASS_NAME = "h-[92%] rounded-xl border m-4 p-4 space-y-4 flex-1";
 
 const SWIPE_THRESHOLD = 50;
 

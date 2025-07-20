@@ -1,5 +1,6 @@
 import { getDb } from "../database";
 import { heroes, RELATION_TYPES } from "@/constants";
+import { RelationType } from "@/types";
 
 export async function createTables() {
   const db = await getDb()
@@ -86,18 +87,48 @@ export const initializeDatabase = async () => {
     const db = await getDb()
 
     try {
-        const heroesCountInDb = (await db.getFirstAsync<{total_heroes: number}>(
-            "SELECT COUNT(id) AS total_heroes FROM hero"
-        ))?.total_heroes;
+        const heroesCountInDb = (
+            await db.getFirstAsync<{ total_heroes: number }>(
+                "SELECT COUNT(id) AS total_heroes FROM hero"
+            )
+        )?.total_heroes;
 
         if (!heroesCountInDb || heroesCountInDb !== TOTAL_HERO_COUNT) {
             if (!heroesCountInDb) await insertHeroes();
             else {
-                for (const hero of heroes.slice(heroesCountInDb)) {
+                for (const hero of heroes) {
+                  if ((await db.getFirstAsync("SELECT * FROM hero WHERE id = ?", [hero.id]))) continue
                     await db.runAsync(
                         "INSERT INTO hero (id, name) VALUES (?, ?)",
                         [hero.id, hero.name]
                     );
+
+                    const relations:
+                        | Record<RelationType, number[]>
+                        | undefined = hero.relations;
+
+                    if (relations) {
+                        for (const relationType of Object.keys(
+                            relations
+                        ) as RelationType[]) {
+                            const relationHeroIds: number[] =
+                                relations[relationType];
+                            for (const targetHeroId of relationHeroIds) {
+                                try {
+                                    await db.runAsync(
+                                        `INSERT INTO relation 
+                                 (main_hero_id, target_hero_id, relation_type_id) 
+                                 VALUES (?, ?, (SELECT id FROM relation_type WHERE name = ? LIMIT 1))`,
+                                        [hero.id, targetHeroId, relationType]
+                                    );
+                                } catch (e: any) {
+                                    console.warn(
+                                        `Failed to insert relation: ${hero.name} -> ${targetHeroId} [${relationType}]`
+                                    );
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
