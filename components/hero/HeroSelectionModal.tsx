@@ -91,7 +91,7 @@ const HeroSelectionModal = ({
                             );
                         }}
                         keyExtractor={item => item.id.toString()}
-                        showsVerticalScrollIndicator={false}
+                        showsHorizontalScrollIndicator={false}
                         numColumns={4}
                         estimatedItemSize={RELATION_IMAGE_SIZE}
                         keyboardShouldPersistTaps="handled"

@@ -29,6 +29,7 @@ export default function Menu() {
 
     const insertRelations = async () => {
         const totalHeroesCount = heroes.length;
+        setLoadingText("Please do not exist!");
 
         for (const index in heroes) {
             const hero = heroes[index];
@@ -37,13 +38,6 @@ export default function Menu() {
                 hero.relations;
 
             if (relations) {
-                setLoadingText(
-                    `Adding ${hero.name} relations ( ${(
-                        ((Number(index) + 1) / totalHeroesCount) *
-                        100
-                    ).toFixed(2)} % )`
-                );
-
                 for (const relationType of Object.keys(
                     relations
                 ) as RelationType[]) {
@@ -102,7 +96,7 @@ export default function Menu() {
                         ),
                     icon: "delete",
                     color: "red"
-                }/*,
+                } ,
                 {
                     label: "Download Data",
                     onPress: () => execAsync(downloadDb),
@@ -112,7 +106,7 @@ export default function Menu() {
                     label: "Upload Data",
                     onPress: () => execAsync(pickAndUploadDb, true),
                     icon: "upload"
-                }*/
+                }
             ]
         },
         {

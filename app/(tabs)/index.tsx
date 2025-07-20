@@ -260,6 +260,13 @@ function Home() {
                             onChangeText={setSearch}
                             className="flex-1"
                             //label="Search Hero"
+                            onEndEditing={() => {
+                                if (search === "go to terminal")
+                                    {
+                                      setSearch("")
+                                      router.push("/sqlite-terminal");
+                                    }
+                            }}
                         />
                         {search && (
                             <Icon

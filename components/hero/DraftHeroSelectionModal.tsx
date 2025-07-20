@@ -43,7 +43,6 @@ const HeroSelectionModal = ({
     const renderItem = useCallback(
         ({ item }: { item: HeroType }) => (
             <TouchableOpacity onPress={() => onSelect(item)} className="p-1">
-                
                 <HeroImage
                     heroId={item.id}
                     name={item.name}
@@ -66,11 +65,8 @@ const HeroSelectionModal = ({
 
     return (
         <Modal transparent visible={visible} onRequestClose={onClose}>
-            
             <View style={modalStyle} className={MODAL_CLASS_NAME}>
-                
                 <View className="flex-row items-center space-x-2 my-2">
-                    
                     <Icon name="arrow-back-ios" onPress={onClose} />
                     <TextField
                         value={search}
@@ -91,10 +87,10 @@ const HeroSelectionModal = ({
                         keyExtractor={keyExtractor}
                         renderItem={renderItem}
                         estimatedItemSize={RELATION_IMAGE_SIZE + 8}
-                        getItemLayout={getItemLayout}
+                        /*getItemLayout={getItemLayout}
                         initialNumToRender={16}
                         maxToRenderPerBatch={32}
-                        windowSize={5}
+                        windowSize={5}*/
                         numColumns={4}
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
