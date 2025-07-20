@@ -19,7 +19,7 @@ export const myapi = axios.create({
 export const getHeroList = async () => {};
 
 import {
-    db,
+    getDb,
     getAllHeroes,
     createHeroRelation,
     getHeroRelations

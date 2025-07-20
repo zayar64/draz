@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { default as kvstore } from "expo-sqlite/kv-store";
 
-import { db } from "@/database";
+import { getDb } from "@/database";
 import { Container, Text, TextField, Icon, Button } from "@/components";
 import { useGlobal, useTheme } from "@/contexts";
 
@@ -72,6 +72,8 @@ const SQLiteConsole = () => {
         if (query === "delete permission") {
           await kvstore.setItem("consolePermissionGranted", "0")
         }
+        
+        const db = await getDb()
 
         setError(null);
         setResult([]);

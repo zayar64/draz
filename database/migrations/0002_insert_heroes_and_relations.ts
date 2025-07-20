@@ -1,4 +1,4 @@
-import { db } from "../database";
+import { getDb } from "../database";
 import { heroes } from "@/constants";
 
 import { HeroType, RelationType, HeroRelationType } from "@/types";

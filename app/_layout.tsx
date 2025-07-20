@@ -7,7 +7,7 @@ import { SplashScreen, Stack, useLocalSearchParams } from "expo-router";
 import { PaperProvider } from "react-native-paper";
 
 import { GlobalProvider, ThemeProvider } from "@/contexts";
-import { initializeDatabase } from "@/database";
+import { initializeDatabase, copyBundledAssetToStorage } from "@/database";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,6 +27,7 @@ const RootLayout = () => {
 
     useEffect(() => {
         (async () => {
+            await copyBundledAssetToStorage();
             await initializeDatabase();
             setDbChecked(true);
         })();
@@ -39,15 +40,12 @@ const RootLayout = () => {
             SplashScreen.hideAsync();
         }
     }, [fontsLoaded, error]);
-    
-    if (!fontsLoaded) return
 
-    if (!dbChecked) return (
-            <Modal
-                transparent={true}
-                visible
-                onRequestClose={() => null}
-            >
+    if (!fontsLoaded) return;
+
+    if (!dbChecked)
+        return (
+            <Modal transparent={true} visible onRequestClose={() => null}>
                 <View
                     style={{
                         flex: 1,
@@ -57,9 +55,6 @@ const RootLayout = () => {
                     }}
                 >
                     <ActivityIndicator size="large" color="#0af" />
-                    <Text style={{
-                      color: "#fff"
-                    }}>Checking Heroes</Text>
                 </View>
             </Modal>
         );

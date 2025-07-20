@@ -5,7 +5,6 @@ import View from "../View";
 import Text from "../Text";
 
 import { heroImageMapping } from "@/constants";
-import { db } from "@/database";
 
 interface ImageType {
     heroId: number;

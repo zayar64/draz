@@ -4,7 +4,7 @@ import { useRouter, Link } from "expo-router";
 import * as Updates from "expo-updates";
 import { default as kvstore } from "expo-sqlite/kv-store";
 
-import { db, downloadDb, pickAndUploadDb } from "@/database";
+import { getDb, downloadDb, pickAndUploadDb } from "@/database";
 import { heroes } from "@/constants";
 import { Container, View, Text, Icon, Prompt, Confirm } from "@/components";
 import { useGlobal, useTheme } from "@/contexts";
@@ -28,6 +28,7 @@ export default function Menu() {
     };
 
     const insertRelations = async () => {
+        const db = await getDb();
         const totalHeroesCount = heroes.length;
         setLoadingText("Please do not exist!");
 
@@ -88,6 +89,7 @@ export default function Menu() {
                             "Are you sure to delete all heroes relations ?",
                             () =>
                                 execAsync(async () => {
+                                  const db = await getDb()
                                     await db.runAsync("DELETE FROM relation;");
                                     await db.runAsync(
                                         "UPDATE sqlite_sequence SET seq = 1 WHERE NAME = 'relation';"
@@ -96,7 +98,7 @@ export default function Menu() {
                         ),
                     icon: "delete",
                     color: "red"
-                } ,
+                },
                 {
                     label: "Download Data",
                     onPress: () => execAsync(downloadDb),

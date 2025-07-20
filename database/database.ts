@@ -2,34 +2,37 @@ import * as SQLite from "expo-sqlite";
 import * as FileSystem from "expo-file-system";
 import { Asset } from "expo-asset";
 
-async function copyBundledAssetToStorage() {
+let dbInstance: SQLite.SQLiteDatabase | null = null;
+
+export async function copyBundledAssetToStorage() {
     try {
         const asset = Asset.fromModule(require("@/assets/databases/draz.db"));
-
-        await asset.downloadAsync(); // Makes sure it's available locally
+        await asset.downloadAsync();
 
         const sourceUri = asset.localUri;
         const destinationUri = FileSystem.documentDirectory + "SQLite/draz.db";
 
         const fileInfo = await FileSystem.getInfoAsync(destinationUri);
 
-        //if (fileInfo.exists) return;
-
-        if (sourceUri) {
+        if (!fileInfo.exists && sourceUri) {
             await FileSystem.copyAsync({
                 from: sourceUri,
                 to: destinationUri
             });
-            console.log("✅ Copied to", destinationUri);
         }
     } catch (error) {
-        console.error(error);
+        console.error("❌ Failed to copy DB asset:", error);
     }
 }
 
-//copyBundledAssetToStorage();
+export async function getDb(): Promise<SQLite.SQLiteDatabase> {
+    if (dbInstance) return dbInstance;
 
-export const db = SQLite.openDatabaseSync("draz.db");
+    dbInstance = SQLite.openDatabaseSync("draz.db");
+    return dbInstance;
+}
+
+//export const db = SQLite.openDatabaseSync("draz.db");
 
 export async function listLocalFiles(): Promise<
     { uri: string; name: string; size: number }[]

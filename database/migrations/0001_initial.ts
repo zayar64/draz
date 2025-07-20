@@ -1,7 +1,8 @@
-import { db } from "../database";
+import { getDb } from "../database";
 import { heroes, RELATION_TYPES } from "@/constants";
 
 export async function createTables() {
+  const db = await getDb()
     try {
         await db.execAsync(`
         CREATE TABLE IF NOT EXISTS hero (
@@ -37,6 +38,7 @@ export async function createTables() {
 }
 
 const createRelationTypes = async () => {
+  const db = await getDb()
     try {
         for (const relationType of RELATION_TYPES) {
             const relationTypeExist = await db.getFirstAsync(
@@ -56,6 +58,7 @@ const createRelationTypes = async () => {
 };
 
 const insertHeroes = async () => {
+  const db = await getDb()
     try {
         for (const hero of heroes) {
             const heroExist = await db.getFirstAsync(
@@ -80,6 +83,7 @@ const TOTAL_HERO_COUNT = heroes.length;
 
 export const initializeDatabase = async () => {
     await createTables();
+    const db = await getDb()
 
     try {
         const heroesCountInDb = (await db.getFirstAsync<{total_heroes: number}>(
