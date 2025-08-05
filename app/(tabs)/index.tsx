@@ -248,6 +248,9 @@ function Home() {
                                 if (search === "go to terminal") {
                                     setSearch("");
                                     router.push("/sqlite-terminal");
+                                } else if (search === "i am zygod") {
+                                  setSearch("")
+                                  router.push("/menu")
                                 }
                             }}
                         />

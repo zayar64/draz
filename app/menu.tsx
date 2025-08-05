@@ -4,7 +4,12 @@ import { useRouter, Link } from "expo-router";
 import * as Updates from "expo-updates";
 import { default as kvstore } from "expo-sqlite/kv-store";
 
-import { getDb, downloadDb, pickAndUploadDb } from "@/database";
+import {
+    getDb,
+    downloadDb,
+    pickAndUploadDb,
+    copyBundledAssetToStorage
+} from "@/database";
 import { heroes } from "@/constants";
 import { Container, View, Text, Icon, Prompt, Confirm } from "@/components";
 import { useGlobal, useTheme } from "@/contexts";
@@ -78,7 +83,14 @@ export default function Menu() {
             items: [
                 {
                     label: "Add All Pre-defined Heroes Relation",
-                    onPress: () => execAsync(insertRelations),
+                    onPress: async () => {
+                        //await execAsync(insertRelations);
+                        await copyBundledAssetToStorage();
+                        alert("Adding complete");
+                        setTimeout(async () => {
+                            await Updates.reloadAsync();
+                        }, 500);
+                    },
                     icon: "database-plus"
                 },
                 {
@@ -89,7 +101,7 @@ export default function Menu() {
                             "Are you sure to delete all heroes relations ?",
                             () =>
                                 execAsync(async () => {
-                                  const db = await getDb()
+                                    const db = await getDb();
                                     await db.runAsync("DELETE FROM relation;");
                                     await db.runAsync(
                                         "UPDATE sqlite_sequence SET seq = 1 WHERE NAME = 'relation';"

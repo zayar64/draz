@@ -2,12 +2,17 @@ import React, { useState, useEffect } from "react";
 import { Modal, ActivityIndicator, View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
+import * as Updates from "expo-updates";
 import { SplashScreen, Stack, useLocalSearchParams } from "expo-router";
 
 import { PaperProvider } from "react-native-paper";
 
 import { GlobalProvider, ThemeProvider } from "@/contexts";
-import { initializeDatabase, copyBundledAssetToStorage } from "@/database";
+import {
+    initializeDatabase,
+    copyBundledAssetToStorage,
+    getDb
+} from "@/database";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,8 +32,18 @@ const RootLayout = () => {
 
     useEffect(() => {
         (async () => {
-            await copyBundledAssetToStorage();
-            await initializeDatabase();
+            try {
+                const db = await getDb();
+                await db.getFirstAsync("SELECT * from migration");
+            } catch (e) {
+                await copyBundledAssetToStorage();
+                alert("Restarting...");
+                setTimeout(async () => {
+                    await Updates.reloadAsync();
+                }, 500);
+            }
+
+            //await initializeDatabase();
             setDbChecked(true);
         })();
     }, []);

@@ -67,31 +67,33 @@ const HeroSelectionModal = ({
                     <FlashList
                         data={filteredHeroes}
                         renderItem={({ item }) => {
-            const disabled = selectedHero.relations[relationType]
-                .map((i: HeroType) => i.id)
-                .includes(item.id);
-            return (
-                <TouchableOpacity
-                    onPress={() =>
-                        Confirm(
-                            "Confirm",
-                            `Add ${item.name} to ${selectedHero.name}'s ( ${relationType} ) ?`,
-                            () => onSelect(item)
-                        )
-                    }
-                    disabled={disabled}
-                    style={{
-                        opacity: disabled ? 0.3 : 1
-                    }}
-                >
-                    <HeroImage
-                        heroId={item.id}
-                        name={item.name}
-                        size={RELATION_IMAGE_SIZE}
-                    />
-                </TouchableOpacity>
-            );
-        }}
+                            const disabled = selectedHero?.relations?.[
+                                relationType
+                            ]
+                                .map((i: HeroType) => i.id)
+                                .includes(item.id);
+                            return (
+                                <TouchableOpacity
+                                    onPress={() =>
+                                        Confirm(
+                                            "Confirm",
+                                            `Add ${item.name} to ${selectedHero.name}'s ( ${relationType} ) ?`,
+                                            () => onSelect(item)
+                                        )
+                                    }
+                                    disabled={disabled}
+                                    style={{
+                                        opacity: disabled ? 0.3 : 1
+                                    }}
+                                >
+                                    <HeroImage
+                                        heroId={item.id}
+                                        name={item.name}
+                                        size={RELATION_IMAGE_SIZE}
+                                    />
+                                </TouchableOpacity>
+                            );
+                        }}
                         keyExtractor={item => item.id.toString()}
                         showsVerticalScrollIndicator={false}
                         numColumns={4}

@@ -14,12 +14,19 @@ export async function copyBundledAssetToStorage() {
 
         const fileInfo = await FileSystem.getInfoAsync(destinationUri);
 
-        if (!fileInfo.exists && sourceUri) {
+        if (sourceUri) {
             await FileSystem.copyAsync({
                 from: sourceUri,
                 to: destinationUri
             });
         }
+
+        /*if (force || (!fileInfo.exists && sourceUri)) {
+            await FileSystem.copyAsync({
+                from: sourceUri,
+                to: destinationUri
+            });
+        }*/
     } catch (error) {
         console.error("❌ Failed to copy DB asset:", error);
     }
