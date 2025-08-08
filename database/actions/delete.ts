@@ -1,4 +1,4 @@
-import { getDb } from "../database";
+import { db } from "../database";
 import { OPPOSITE_RELATION_TYPE_MAPPINGS } from "@/constants";
 import { RelationType } from "@/types";
 
@@ -13,7 +13,7 @@ export const deleteHeroRelation = async (data : {
         relationType
     } = data;
     
-    const db = await getDb()
+    
     
     try {
         await db.runAsync("BEGIN");

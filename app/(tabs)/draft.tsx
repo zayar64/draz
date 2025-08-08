@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Alert, TouchableOpacity, ScrollView } from "react-native";
+import { useRouter } from "expo-router"
 import { FlashList } from "@shopify/flash-list";
 
 import { Container, View, Text, Icon, IconButton, Button } from "@/components";
@@ -10,9 +11,10 @@ import {
     DraftHeroRelationsModal,
     DraftHeroSelectionModal
 } from "@/components/hero";
-import { useTheme } from "@/contexts";
+import { useTheme, useUser } from "@/contexts";
 import { getAllHeroes, getHeroRelations } from "@/database";
 import { HeroType, RelationType } from "@/types";
+import { alertPremium } from "@/utils";
 
 const IMAGE_SIZE = 40;
 const BADGE_SIZE = IMAGE_SIZE * 0.4;
@@ -48,6 +50,8 @@ const Draft = () => {
     >(Array(5).fill(null));
 
     const { colors } = useTheme();
+    const { isPremiumUser } = useUser();
+    const router = useRouter()
 
     useEffect(() => {
         getAllHeroes().then(setHeroes);
@@ -62,11 +66,7 @@ const Draft = () => {
     }, [heroes, blueTeam, redTeam, bannedHeroes]);
 
     const availableHeroes = useMemo(
-        () =>
-            heroes.filter(
-                h =>
-                    !excludedHeroes.some(e => e.id === h.id)
-            ),
+        () => heroes.filter(h => !excludedHeroes.some(e => e.id === h.id)),
         [heroes, blueTeam, redTeam, bannedHeroes]
     );
 
@@ -146,6 +146,7 @@ const Draft = () => {
         [recommendations, blueTeam, redTeam]
     );
 
+    const [selectionTitle, setSelectionTitle] = useState<string>("");
     const handleHeroToggle = async (
         team: (HeroType | null)[],
         setter: React.Dispatch<React.SetStateAction<(HeroType | null)[]>>,
@@ -158,6 +159,14 @@ const Draft = () => {
                 relations: await getHeroRelations(hero)
             });
         } else {
+            setSelectionTitle(
+                team === blueTeam
+                    ? "Select for blue"
+                    : team === redTeam
+                    ? "Select for red"
+                    : "Ban a hero"
+            );
+
             setShowHeroSelections(true);
             setOnSelect(() => async (selected: HeroType) => {
                 setter(prev => {
@@ -234,12 +243,7 @@ const Draft = () => {
 
                 <Icon
                     name="save"
-                    onPress={() =>
-                        Alert.alert(
-                            "Notice",
-                            "Only premium users can access this feature"
-                        )
-                    }
+                    onPress={isPremiumUser ? () => alert("Function is not yet implemented :3") : ()=>alertPremium(router)}
                     size="large"
                     /*disabled={
                         !blueTeam.every(item => item) ||
@@ -333,6 +337,7 @@ const Draft = () => {
                                 name="delete"
                                 color="error"
                                 onPress={async () => {
+                                    setSelectedHero(null);
                                     const tmp =
                                         heroToRemoveFrom === blueTeam
                                             ? setBlueTeam
@@ -368,6 +373,7 @@ const Draft = () => {
                     }}
                     heroes={availableHeroes}
                     onSelect={hero => onSelect && onSelect(hero)}
+                    selectionTitle={selectionTitle}
                 />
             )}
         </Container>

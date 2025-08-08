@@ -1,6 +1,5 @@
 import axios from "axios";
 
-export default api;
 import React, {
     useState,
     useEffect,
@@ -17,7 +16,6 @@ import {
 } from "react-native";
 
 import Text from "@/components/Text";
-import { api, myapi } from "@/apis";
 
 interface GlobalContextType {
     loading: boolean;

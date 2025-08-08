@@ -1,5 +1,12 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+    useState,
+    useEffect,
+    useMemo,
+    useCallback,
+    useRef
+} from "react";
 import {
+    Alert,
     Modal,
     StyleProp,
     ViewStyle,
@@ -10,8 +17,9 @@ import {
     Keyboard
 } from "react-native";
 import { useRouter } from "expo-router";
+import kvstore from "expo-sqlite/kv-store";
 
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, FlashListRef } from "@shopify/flash-list";
 import {
     getAllHeroes,
     createHeroRelation,
@@ -30,7 +38,9 @@ import {
 
 import { HeroRelationsModal, HeroSelectionModal } from "@/components/hero";
 
-import { useGlobal, useTheme } from "@/contexts";
+import { paginateList } from "@/components/hero/HeroRelationsModal";
+
+import { useGlobal, useTheme, useUser } from "@/contexts";
 import { increaseHexIntensity } from "@/utils";
 import { RELATION_TYPES } from "@/constants";
 import { HeroType } from "@/types";
@@ -39,6 +49,34 @@ import { HeroType } from "@/types";
 const RELATION_IMAGE_SIZE = 44;
 
 export type RelationType = (typeof RELATION_TYPES)[number];
+
+function formatDuration(ms: number): string {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    const remainingHours = hours % 24;
+    const remainingMinutes = minutes % 60;
+    const remainingSeconds = seconds % 60;
+
+    const parts = [];
+    if (days > 0) parts.push(`${days} day${days !== 1 ? "s" : ""}`);
+    if (remainingHours > 0)
+        parts.push(`${remainingHours} hour${remainingHours !== 1 ? "s" : ""}`);
+    if (remainingMinutes > 0)
+        parts.push(
+            `${remainingMinutes} minute${remainingMinutes !== 1 ? "s" : ""}`
+        );
+    if (remainingSeconds > 0 || parts.length === 0)
+        parts.push(
+            `${seconds > 60 ? "and " : ""}${remainingSeconds} second${
+                remainingSeconds !== 1 ? "s" : ""
+            }`
+        );
+
+    return parts.join(" ");
+}
 
 const HeroCard = React.memo(
     ({ hero, onPress }: { hero: HeroType; onPress: () => void }) => (
@@ -59,7 +97,9 @@ function Home() {
 
     const { setLoading } = useGlobal();
     const { colors } = useTheme();
+    const { setIsPremiumUser } = useUser();
     const router = useRouter();
+    const allHeroListRef = useRef<FlashListRef<HeroType>>(null);
 
     const modalStyle: StyleProp<ViewStyle> = useMemo(
         () => ({
@@ -82,13 +122,21 @@ function Home() {
         })();
     }, [setLoading]);
 
-    const filteredHeroes = useMemo(
-        () =>
-            heroes.filter(h =>
-                h.name.toLowerCase().includes(search.toLowerCase())
-            ),
-        [heroes, search]
-    );
+    const filteredHeroes = useMemo(() => {
+        const lowerCaseSearch = search.toLowerCase();
+        if (search) {
+            setTimeout(() => {
+                allHeroListRef.current?.scrollToIndex({
+                    index: 0
+                    //animated: true
+                });
+            }, 100);
+            return heroes.filter(h =>
+                h.name.toLowerCase().startsWith(lowerCaseSearch)
+            );
+        }
+        return [];
+    }, [heroes, search]);
 
     const handleResetRelations = useCallback(() => {
         setSelectedHero(null);
@@ -192,6 +240,40 @@ function Home() {
         []
     );
 
+    const specialSearcheFunctions: Record<string, () => void> = useMemo(
+        () => ({
+            "i am developer": async () => kvstore.setItem("iAmDeveloper", "1"),
+            "i am not developer": async () =>
+                kvstore.setItem("iAmDeveloper", "0")
+        }),
+        [router]
+    );
+
+    const memoizedAllHeroes = useMemo(
+        () => (
+            <FlashList
+                showsVerticalScrollIndicator={false}
+                data={heroes}
+                ref={allHeroListRef}
+                renderItem={renderHero}
+                keyExtractor={keyExtractor}
+                numColumns={5}
+                keyboardShouldPersistTaps="handled"
+                ListEmptyComponent={
+                    <Text
+                        className="m-4 text-center"
+                        style={{
+                            color: colors.error
+                        }}
+                    >
+                        No Heroes Found
+                    </Text>
+                }
+            />
+        ),
+        [heroes, renderHero, keyExtractor, colors, allHeroListRef]
+    );
+
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -226,7 +308,9 @@ function Home() {
                             onClose={() => {
                                 setShowHeroSelections(false);
                             }}
-                            heroes={heroes.filter(hero => hero.id !== selectedHero.id)}
+                            heroes={heroes.filter(
+                                hero => hero.id !== selectedHero.id
+                            )}
                             onSelect={async hero => {
                                 await handleAddHeroRelation(hero);
                                 setShowHeroSelections(false);
@@ -237,45 +321,64 @@ function Home() {
 
                     {/* Search Bar */}
                     <View className="flex-row items-center p-4 space-x-2 border-b">
-                        <Icon name="search" />
-
                         <TextField
                             value={search}
                             onChangeText={setSearch}
                             className="flex-1"
                             //label="Search Hero"
                             onEndEditing={() => {
-                                if (search === "go to terminal") {
+                                const specialFunc =
+                                    specialSearcheFunctions[search];
+                                if (specialFunc) {
                                     setSearch("");
-                                    router.push("/sqlite-terminal");
-                                } else if (search === "i am zygod") {
-                                  setSearch("")
-                                  router.push("/menu")
+                                    specialFunc();
                                 }
                             }}
                         />
-                        {search && (
+
+                        {search ? (
                             <Icon
                                 name="clear"
                                 size="large"
                                 onPress={() => setSearch("")}
                             />
+                        ) : (
+                            <Icon name="search" size="large" />
                         )}
                     </View>
 
                     {/* HeroType Grid */}
-                    <FlashList
-                        showsVerticalScrollIndicator={false}
-                        data={filteredHeroes}
-                        renderItem={renderHero}
-                        keyExtractor={keyExtractor}
-                        numColumns={5}
-                        estimatedItemSize={100}
-                        keyboardShouldPersistTaps="handled"
-                    />
+                    {memoizedAllHeroes}
+
+                    <View
+                        className="h-full"
+                        style={{
+                            display: search ? "flex" : "none"
+                        }}
+                    >
+                        <FlashList
+                            showsVerticalScrollIndicator={false}
+                            data={paginateList(filteredHeroes, 5 * 6)}
+                            renderItem={renderHero}
+                            keyExtractor={keyExtractor}
+                            numColumns={5}
+                            keyboardShouldPersistTaps="handled"
+                            ListEmptyComponent={
+                                <Text
+                                    className="m-4 text-center"
+                                    style={{
+                                        color: colors.error
+                                    }}
+                                >
+                                    No Heroes Found
+                                </Text>
+                            }
+                        />
+                    </View>
                 </View>
             </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
     );
 }
+
 export default Home;

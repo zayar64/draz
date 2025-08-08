@@ -1,12 +1,22 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, {
+    useState,
+    useMemo,
+    useCallback,
+    useRef,
+    useEffect
+} from "react";
 import { Modal, TouchableOpacity } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, FlashListRef } from "@shopify/flash-list";
 import { View, Text, Icon, HeroImage, TextField, Confirm } from "@/components";
 import { increaseHexIntensity, reduceHexAlpha } from "@/utils";
 import { useTheme } from "@/contexts";
 import { HeroType, RelationType } from "@/types";
 
-import { RELATION_IMAGE_SIZE, MODAL_CLASS_NAME } from "./HeroRelationsModal";
+import {
+    RELATION_IMAGE_SIZE,
+    MODAL_CLASS_NAME,
+    paginateList
+} from "./HeroRelationsModal";
 
 const HeroSelectionModal = ({
     visible,
@@ -28,78 +38,133 @@ const HeroSelectionModal = ({
     const modalStyle = {
         backgroundColor: increaseHexIntensity(colors.background, 0.2)
     };
+    const listRef = useRef<FlashListRef<HeroType>>(null);
 
     const filteredHeroes = useMemo(() => {
         const lowerCaseSearch = search.toLowerCase();
-        return heroes.filter(h =>
-            h.name.toLowerCase().startsWith(lowerCaseSearch)
-        );
+        if (search) {
+            setTimeout(() => {
+                listRef.current?.scrollToIndex({
+                    index: 0
+                    //animated: true
+                });
+            }, 100);
+            return heroes.filter(h =>
+                h.name.toLowerCase().startsWith(lowerCaseSearch)
+            );
+        }
+        return [];
     }, [heroes, search]);
 
+    const renderItem = useCallback(
+        ({ item }: { item: HeroType }) => {
+            const disabled = selectedHero?.relations?.[relationType]
+                .map((i: HeroType) => i.id)
+                .includes(item.id);
+            return (
+                <TouchableOpacity
+                    onPress={() =>
+                        Confirm(
+                            "Confirm",
+                            `Add ${item.name} to ${selectedHero.name}'s ( ${relationType} ) ?`,
+                            () => onSelect(item)
+                        )
+                    }
+                    disabled={disabled}
+                    style={{
+                        opacity: disabled ? 0.3 : 1
+                    }}
+                >
+                    <HeroImage
+                        heroId={item.id}
+                        name={item.name}
+                        size={RELATION_IMAGE_SIZE}
+                    />
+                </TouchableOpacity>
+            );
+        },
+        [selectedHero, relationType, onSelect]
+    );
+
+    const batchSize = useMemo(() => 4 * 6, []);
+    const [visibleCount, setVisibleCount] = useState(batchSize);
+
+    useEffect(() => {
+        if (visibleCount < heroes.length) {
+            const timeout = setTimeout(() => {
+                setVisibleCount(prev => prev + batchSize);
+            }, 100);
+            return () => clearTimeout(timeout);
+        }
+    }, [visibleCount, heroes.length]);
+
+    const memoizedList = useMemo(
+        () => (
+            <FlashList
+                data={heroes.slice(0, visibleCount)}
+                ref={listRef}
+                renderItem={renderItem}
+                keyExtractor={item => item.id.toString()}
+                showsVerticalScrollIndicator={false}
+                numColumns={4}
+                keyboardShouldPersistTaps="handled"
+            />
+        ),
+        [heroes, renderItem, visibleCount, listRef]
+    );
+
     return (
-        <Modal transparent visible={visible} onRequestClose={onClose}>
-            <View style={modalStyle} className={MODAL_CLASS_NAME}>
-                <View className="flex-row items-center space-x-4">
-                    <Icon name="arrow-back-ios" onPress={onClose} />
-                    <HeroImage heroId={selectedHero.id} size={64} />
-                    <Text variant="header">{selectedHero.name}</Text>
-                </View>
+        <Modal
+            transparent
+            visible={visible}
+            onRequestClose={onClose}
+            animationType="fade"
+        >
+            <View className="flex-1 justify-center">
+                <View
+                    style={modalStyle}
+                    className={`${MODAL_CLASS_NAME} overflow-hidden`}
+                >
+                    <View className="flex-row items-center space-x-4">
+                        <Icon name="arrow-back-ios" onPress={onClose} />
+                        <HeroImage heroId={selectedHero.id} size={64} />
+                        <Text variant="header">{selectedHero.name}</Text>
+                    </View>
 
-                <View className="flex-row items-center space-x-2">
-                    <TextField
-                        value={search}
-                        onChangeText={setSearch}
-                        className="grow"
-                        label={`Search ${selectedHero.name}'s ( ${relationType} )`}
-                    />
-                    {search && (
-                        <Icon
-                            name="clear"
-                            size="large"
-                            onPress={() => setSearch("")}
+                    <View className="flex-row items-center space-x-2">
+                        <TextField
+                            value={search}
+                            onChangeText={setSearch}
+                            className="grow"
+                            label={`Search ${selectedHero.name}'s ( ${relationType} )`}
                         />
-                    )}
-                </View>
+                        {search && (
+                            <Icon
+                                name="clear"
+                                size="large"
+                                onPress={() => setSearch("")}
+                            />
+                        )}
+                    </View>
 
-                <View />
-
-                <View className="flex-1">
-                    <FlashList
-                        data={filteredHeroes}
-                        renderItem={({ item }) => {
-                            const disabled = selectedHero?.relations?.[
-                                relationType
-                            ]
-                                .map((i: HeroType) => i.id)
-                                .includes(item.id);
-                            return (
-                                <TouchableOpacity
-                                    onPress={() =>
-                                        Confirm(
-                                            "Confirm",
-                                            `Add ${item.name} to ${selectedHero.name}'s ( ${relationType} ) ?`,
-                                            () => onSelect(item)
-                                        )
-                                    }
-                                    disabled={disabled}
-                                    style={{
-                                        opacity: disabled ? 0.3 : 1
-                                    }}
-                                >
-                                    <HeroImage
-                                        heroId={item.id}
-                                        name={item.name}
-                                        size={RELATION_IMAGE_SIZE}
-                                    />
-                                </TouchableOpacity>
-                            );
+                    <View
+                        className="h-full"
+                        style={{
+                            display: search ? "flex" : "none"
                         }}
-                        keyExtractor={item => item.id.toString()}
-                        showsVerticalScrollIndicator={false}
-                        numColumns={4}
-                        estimatedItemSize={RELATION_IMAGE_SIZE}
-                        keyboardShouldPersistTaps="handled"
-                    />
+                    >
+                        <FlashList
+                            data={paginateList(filteredHeroes, 4 * 4)}
+                            renderItem={renderItem}
+                            keyExtractor={item => item.id.toString()}
+                            showsVerticalScrollIndicator={false}
+                            numColumns={4}
+                            keyboardShouldPersistTaps="handled"
+                        />
+                    </View>
+
+                    <View />
+                    {memoizedList}
                 </View>
             </View>
         </Modal>

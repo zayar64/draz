@@ -1,26 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ScrollView, TouchableOpacity } from "react-native";
-import { useRouter, Link } from "expo-router";
+import { useRouter, Link, useFocusEffect } from "expo-router";
 import * as Updates from "expo-updates";
-import { default as kvstore } from "expo-sqlite/kv-store";
+import kvstore from "expo-sqlite/kv-store";
 
 import {
-    getDb,
+    db,
     downloadDb,
     pickAndUploadDb,
-    copyBundledAssetToStorage
+    copyDatabaseFromAssets
 } from "@/database";
 import { heroes } from "@/constants";
 import { Container, View, Text, Icon, Prompt, Confirm } from "@/components";
-import { useGlobal, useTheme } from "@/contexts";
+import { useGlobal, useTheme, useUser } from "@/contexts";
 import { IconType, RelationType, HeroType, HeroRelationType } from "@/types";
+import { alertPremium } from "@/utils"
 
 export default function Menu() {
+    const [iAmDeveloper, setIAmDeveloper] = useState<string>("0");
+    const router = useRouter();
     const { setLoading, setLoadingText } = useGlobal();
     const { colors, mode, toggleMode } = useTheme();
-    const navigate = useRouter().push;
-
-    const [showPrompt, setShowPrompt] = useState(false);
+    const { isPremiumUser } = useUser();
 
     const execAsync = async (func: () => void, restart = false) => {
         setLoading(true);
@@ -32,8 +33,15 @@ export default function Menu() {
         }
     };
 
+    useFocusEffect(
+        useCallback(() => {
+            (async () => {
+                setIAmDeveloper(await kvstore.getItem("iAmDeveloper") || "0");
+            })();
+        }, [])
+    );
+
     const insertRelations = async () => {
-        const db = await getDb();
         const totalHeroesCount = heroes.length;
         setLoadingText("Please do not exist!");
 
@@ -74,6 +82,7 @@ export default function Menu() {
             label: string;
             onPress: () => void;
             icon: string;
+            disabled?: boolean;
             color?: string;
             iconSrc?: IconType;
         }[];
@@ -82,44 +91,16 @@ export default function Menu() {
             title: "Data Management",
             items: [
                 {
-                    label: "Add All Pre-defined Heroes Relation",
-                    onPress: async () => {
-                        //await execAsync(insertRelations);
-                        await copyBundledAssetToStorage();
-                        alert("Adding complete");
-                        setTimeout(async () => {
-                            await Updates.reloadAsync();
-                        }, 500);
-                    },
-                    icon: "database-plus"
-                },
-                {
-                    label: "Delete All Heroes Relation",
-                    onPress: () =>
-                        Confirm(
-                            "",
-                            "Are you sure to delete all heroes relations ?",
-                            () =>
-                                execAsync(async () => {
-                                    const db = await getDb();
-                                    await db.runAsync("DELETE FROM relation;");
-                                    await db.runAsync(
-                                        "UPDATE sqlite_sequence SET seq = 1 WHERE NAME = 'relation';"
-                                    );
-                                })
-                        ),
-                    icon: "delete",
-                    color: "red"
-                },
-                {
                     label: "Download Data",
                     onPress: () => execAsync(downloadDb),
-                    icon: "download"
+                    icon: "download",
+                    disabled: !isPremiumUser
                 },
                 {
                     label: "Upload Data",
                     onPress: () => execAsync(pickAndUploadDb, true),
-                    icon: "upload"
+                    icon: "upload",
+                    disabled: !isPremiumUser
                 }
             ]
         },
@@ -132,14 +113,49 @@ export default function Menu() {
                     icon: `${mode}-mode`,
                     iconSrc: "material"
                 }
-                /*{
-                    label: "Terminal",
-                    onPress: () => navigate("/sqlite-terminal"),
-                    icon: "terminal",
-                    iconSrc: "material"
-                }*/
             ]
-        }
+        },
+        iAmDeveloper === "1"
+            ? {
+                  title: "Developer Options",
+                  items: [
+                      {
+                          label: "Copy Database From Assets",
+                          onPress: async () => {
+                              //await execAsync(insertRelations);
+                              await copyDatabaseFromAssets();
+                              await Updates.reloadAsync();
+                          },
+                          icon: "database-refresh"
+                      },
+                      {
+                          label: "Delete All Heroes Relation",
+                          onPress: () =>
+                              Confirm(
+                                  "",
+                                  "Are you sure to delete all heroes relations ?",
+                                  () =>
+                                      execAsync(async () => {
+                                          await db.runAsync(
+                                              "DELETE FROM relation;"
+                                          );
+                                          await db.runAsync(
+                                              "UPDATE sqlite_sequence SET seq = 1 WHERE NAME = 'relation';"
+                                          );
+                                      })
+                              ),
+                          icon: "delete",
+                          color: "red"
+                      },
+                      {
+                          label: "Terminal",
+                          icon: "terminal",
+                          onPress: () => router.push("/sqlite-terminal"),
+                          iconSrc: "material"
+                      }
+                  ]
+              }
+            : { title: "", items: [] }
     ];
 
     return (
@@ -159,17 +175,25 @@ export default function Menu() {
                                 <TouchableOpacity
                                     key={index}
                                     className="flex-row space-x-4 items-center p-4"
-                                    style={{ borderColor: colors.border }}
-                                    onPress={item.onPress}
+                                    style={{
+                                        borderColor: colors.border
+                                    }}
+                                    onPress={
+                                        item.disabled
+                                            ? ()=>alertPremium(router)
+                                            : item.onPress
+                                    }
                                 >
                                     <Icon
-                                        name={item.icon}
+                                        name={
+                                            item.disabled ? "lock" : item.icon
+                                        }
                                         src={
                                             item?.iconSrc
                                                 ? (item?.iconSrc as IconType)
                                                 : "materialCom"
                                         }
-                                        color={item.color}
+                                        //color={item.color}
                                     />
                                     <Text
                                         className="ml-3"

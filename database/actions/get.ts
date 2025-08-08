@@ -1,4 +1,4 @@
-import { getDb } from "../database";
+import { db } from "../database";
 import { heroes as heroSeedData } from "@/constants";
 import { HeroType, HeroRelationType, RelationType } from "@/types";
 
@@ -17,7 +17,7 @@ function pickRandom<T>(array: T[], count: number): T[] {
 export const getHeroRelations = async (
     hero: HeroType
 ): Promise<HeroRelationType> => {
-  const db = await getDb()
+  
     const relationTypes = await db.getAllAsync<{id: number, name: RelationType}>("SELECT * FROM relation_type");
 
     const heroRelations = await db.getAllAsync<{id: number, main_hero_id: number, target_hero_id: number, relation_type_id: number}>(
@@ -51,7 +51,7 @@ export const getHeroRelations = async (
 };
 
 export const getAllHeroes = async (): Promise<HeroType[]> => {
-  const db = await getDb()
+  
     try {
         const allHeroes = await db.getAllAsync(
             "SELECT * FROM hero ORDER BY name"

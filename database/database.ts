@@ -4,7 +4,7 @@ import { Asset } from "expo-asset";
 
 let dbInstance: SQLite.SQLiteDatabase | null = null;
 
-export async function copyBundledAssetToStorage() {
+export async function copyDatabaseFromAssets() {
     try {
         const asset = Asset.fromModule(require("@/assets/databases/draz.db"));
         await asset.downloadAsync();
@@ -32,14 +32,14 @@ export async function copyBundledAssetToStorage() {
     }
 }
 
-export async function getDb(): Promise<SQLite.SQLiteDatabase> {
+/*export async function getDb(): Promise<SQLite.SQLiteDatabase> {
     if (dbInstance) return dbInstance;
 
     dbInstance = SQLite.openDatabaseSync("draz.db");
     return dbInstance;
-}
+}*/
 
-//export const db = SQLite.openDatabaseSync("draz.db");
+export const db = SQLite.openDatabaseSync("draz.db");
 
 export async function listLocalFiles(): Promise<
     { uri: string; name: string; size: number }[]

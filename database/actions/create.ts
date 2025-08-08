@@ -1,4 +1,4 @@
-import { getDb } from "../database";
+import { db } from "../database";
 import { OPPOSITE_RELATION_TYPE_MAPPINGS } from "@/constants";
 import { RelationType } from "@/types";
 
@@ -8,7 +8,7 @@ export const createHeroRelation = async (data: {
     relationType: RelationType;
 }) => {
     const { mainHeroId, targetHeroId, relationType } = data;
-    const db = await getDb()
+    
     try {
         await db.runAsync("BEGIN");
 

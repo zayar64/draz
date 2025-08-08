@@ -40,7 +40,6 @@ export const RecommendationBox = ({
                     )}
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    estimatedItemSize={IMAGE_SIZE}
                     renderItem={({ item }) => (
                         <TouchableOpacity
                             onPress={() => onSlotPress(Number(item[0]), title)}

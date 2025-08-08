@@ -34,41 +34,15 @@ export default function TabsLayout() {
                 name: "draft",
                 iconName: "sword-cross",
                 iconSrc: "materialCom"
-            }
-            /*{
+            },
+            {
                 title: "Menu",
                 name: "menu",
                 iconName: "menu"
-            }*/
+            }
         ],
         [router]
     );
-
-    /*useEffect(() => {
-        const checkPermission = async () => {
-            const hasPermission = await kvstore.getItem(PERMISSION_KEY);
-            setHasPermissionToUseApp(hasPermission === "1");
-        };
-        checkPermission();
-    }, []);
-
-    if (!hasPermissionToUseApp) {
-        return (
-            <Prompt
-                visible
-                onClose={BackHandler.exitApp}
-                message="Enter permission key to continue..."
-                onSubmit={async prompt => {
-                    if (prompt === "Junian") {
-                        setHasPermissionToUseApp(true);
-                        await kvstore.setItem(PERMISSION_KEY, "1");
-                    } else {
-                        alert("Incorrect!");
-                    }
-                }}
-            />
-        );
-    }*/
 
     return (
         <View className="flex-1">
@@ -100,24 +74,6 @@ export default function TabsLayout() {
                                     src={tab.iconSrc ?? "material"}
                                 />
                             )
-                            /*tabBarButton: ({
-                                onPress,
-                                style,
-                                children,
-                                ...props
-                            }) => {
-                                return (
-                                    <TouchableOpacity
-                                        onPress={
-                                            tab.onPress ??
-                                            (() => router.push(tab.name as any))
-                                        }
-                                        style={style}
-                                    >
-                                        {children}
-                                    </TouchableOpacity>
-                                );
-                            }*/
                         }}
                     />
                 ))}

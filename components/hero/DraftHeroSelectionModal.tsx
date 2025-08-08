@@ -1,25 +1,37 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, {
+    useState,
+    useMemo,
+    useCallback,
+    useRef,
+    useEffect
+} from "react";
 import { Modal, TouchableOpacity } from "react-native";
-import { FlashList } from "@shopify/flash-list";
-import { View, Icon, HeroImage } from "@/components";
+import { FlashList, FlashListRef } from "@shopify/flash-list";
+import { View, Icon, HeroImage, Text } from "@/components";
 import { TextField } from "@/components";
-import { increaseHexIntensity } from "@/utils";
+import { increaseHexIntensity, reduceHexAlpha } from "@/utils";
 import { useTheme } from "@/contexts";
 import { HeroType } from "@/types";
-import { RELATION_IMAGE_SIZE, MODAL_CLASS_NAME } from "./HeroRelationsModal";
+import {
+    RELATION_IMAGE_SIZE,
+    MODAL_CLASS_NAME,
+    paginateList
+} from "./HeroRelationsModal";
 
 const HeroSelectionModal = ({
     visible,
     onClose,
     heroes,
-    onSelect
+    onSelect,
+    selectionTitle
 }: {
     visible: boolean;
     onClose: () => void;
     heroes: HeroType[];
     onSelect: (hero: HeroType) => void;
+    selectionTitle: string;
 }) => {
-  const [search, setSearch] = useState<string>("")
+    const [search, setSearch] = useState<string>("");
     const { colors } = useTheme();
 
     // Memoize modal style to prevent re-renders
@@ -29,6 +41,24 @@ const HeroSelectionModal = ({
         }),
         [colors.background]
     );
+
+    const listRef = useRef<FlashListRef<HeroType>>(null);
+
+    const filteredHeroes = useMemo(() => {
+        const lowerCaseSearch = search.toLowerCase();
+        if (search) {
+            setTimeout(() => {
+                listRef.current?.scrollToIndex({
+                    index: 0
+                    //animated: true
+                });
+            }, 100);
+            return heroes.filter(h =>
+                h.name.toLowerCase().startsWith(lowerCaseSearch)
+            );
+        }
+        return [];
+    }, [heroes, search]);
 
     // Stable key extractor
     const keyExtractor = useCallback(
@@ -50,55 +80,108 @@ const HeroSelectionModal = ({
         [onSelect]
     );
 
-    // Pre-calculate layout to speed up scroll
-    const getItemLayout = useCallback(
-        (_: any, index: number) => ({
-            length: RELATION_IMAGE_SIZE + 8, // image size + padding
-            offset: (RELATION_IMAGE_SIZE + 8) * index,
-            index
-        }),
-        []
+    const batchSize = useMemo(() => 4 * 6, []);
+    const [visibleCount, setVisibleCount] = useState(batchSize);
+
+    useEffect(() => {
+        if (visibleCount < heroes.length) {
+            const timeout = setTimeout(() => {
+                setVisibleCount(prev => prev + batchSize);
+            }, 100);
+            return () => clearTimeout(timeout);
+        }
+    }, [visibleCount, heroes.length]);
+
+    const memoizedList = useMemo(
+        () => (
+            <FlashList
+                data={heroes.slice(0, visibleCount)}
+                ref={listRef}
+                renderItem={renderItem}
+                keyExtractor={item => item.id.toString()}
+                showsVerticalScrollIndicator={false}
+                numColumns={4}
+                keyboardShouldPersistTaps="handled"
+            />
+        ),
+        [heroes, renderItem, visibleCount, listRef]
     );
-    
-    const filteredHeroes = useMemo(() => {
-        const lowerCaseSearch = search.toLowerCase();
-        return heroes.filter(h =>
-            h.name.toLowerCase().startsWith(lowerCaseSearch)
-        );
-    }, [heroes, search]);
+
+    const selectionTitleColor = useMemo(
+        () =>
+            selectionTitle.includes("blue")
+                ? colors.primary
+                : selectionTitle.includes("red")
+                ? colors.error
+                : colors.text,
+        [selectionTitle, colors]
+    );
 
     return (
-        <Modal transparent visible={visible} onRequestClose={onClose}>
-            <View style={modalStyle} className={MODAL_CLASS_NAME}>
-                <View className="flex-row items-center space-x-2 my-2">
-                    <Icon name="arrow-back-ios" onPress={onClose} />
-                    <TextField
-                        value={search}
-                        onChangeText={setSearch}
-                        className="flex-1"
-                    />
-                    {search.length > 0 && (
-                        <Icon
-                            name="clear"
-                            size="large"
-                            onPress={() => setSearch("")}
+        <Modal
+            transparent
+            visible={visible}
+            onRequestClose={onClose}
+            //animationType="fade"
+        >
+            <View
+                className="flex-1 justify-center"
+                style={{
+                    backgroundColor: reduceHexAlpha(colors.background, 0.2)
+                }}
+            >
+                <View style={modalStyle} className={MODAL_CLASS_NAME}>
+                    <View
+                        className="border-t my-4 justify-center items-center"
+                        style={{
+                            borderColor: selectionTitleColor
+                        }}
+                    >
+                        <Text
+                            className="absolute top-[-16px] px-2 text-lg"
+                            style={{
+                                backgroundColor: modalStyle.backgroundColor,
+                                color: selectionTitleColor
+                            }}
+                        >
+                            {selectionTitle.toUpperCase()}
+                        </Text>
+                    </View>
+
+                    <View className="flex-row items-center space-x-2 my-2">
+                        <Icon name="arrow-back-ios" onPress={onClose} />
+                        <TextField
+                            value={search}
+                            onChangeText={setSearch}
+                            className="flex-1"
                         />
-                    )}
-                </View>
-                <View className="flex-1 h-[80%]">
-                    <FlashList
-                        data={filteredHeroes}
-                        keyExtractor={keyExtractor}
-                        renderItem={renderItem}
-                        estimatedItemSize={RELATION_IMAGE_SIZE + 8}
-                        /*getItemLayout={getItemLayout}
-                        initialNumToRender={16}
-                        maxToRenderPerBatch={32}
-                        windowSize={5}*/
-                        numColumns={4}
-                        showsVerticalScrollIndicator={false}
-                        keyboardShouldPersistTaps="handled"
-                    />
+                        {search.length > 0 && (
+                            <Icon
+                                name="clear"
+                                size="large"
+                                onPress={() => setSearch("")}
+                            />
+                        )}
+                    </View>
+
+                    <View
+                        className="h-full"
+                        style={{
+                            display: search ? "flex" : "none"
+                        }}
+                    >
+                        <FlashList
+                            data={paginateList(filteredHeroes, 4 * 4)}
+                            keyExtractor={keyExtractor}
+                            renderItem={renderItem}
+                            numColumns={4}
+                            showsVerticalScrollIndicator={false}
+                            keyboardShouldPersistTaps="handled"
+                        />
+                    </View>
+
+                    <View />
+                    {memoizedList}
                 </View>
             </View>
         </Modal>
