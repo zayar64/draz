@@ -12,11 +12,7 @@ import { increaseHexIntensity, reduceHexAlpha } from "@/utils";
 import { useTheme } from "@/contexts";
 import { HeroType, RelationType } from "@/types";
 
-import {
-    RELATION_IMAGE_SIZE,
-    MODAL_CLASS_NAME,
-    paginateList
-} from "./HeroRelationsModal";
+import { RELATION_IMAGE_SIZE, MODAL_CLASS_NAME } from "./HeroRelationsModal";
 
 const BATCH_SIZE = 4 * 6;
 
@@ -89,26 +85,10 @@ const HeroSelectionModal = ({
         [selectedHero, relationType, onSelect]
     );
 
-    const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
-
-    useEffect(() => {
-        if (visibleCount < heroes.length) {
-            const timeout = setTimeout(() => {
-                setVisibleCount(prev => prev + BATCH_SIZE);
-            }, 100);
-            return () => clearTimeout(timeout);
-        }
-    }, [visibleCount, heroes.length]);
-
-    const paginatedHeroes = useMemo(
-        () => heroes.slice(0, visibleCount),
-        [heroes, visibleCount]
-    );
-
     const memoizedList = useMemo(
         () => (
             <FlashList
-                data={paginatedHeroes}
+                data={heroes}
                 ref={listRef}
                 renderItem={renderItem}
                 keyExtractor={item => item.id.toString()}
@@ -117,8 +97,10 @@ const HeroSelectionModal = ({
                 keyboardShouldPersistTaps="handled"
             />
         ),
-        [renderItem, paginatedHeroes]
+        [renderItem, heroes]
     );
+
+    useEffect(() => setSearch(""), [visible]);
 
     return (
         <Modal
@@ -146,7 +128,7 @@ const HeroSelectionModal = ({
                             label={`Search ${selectedHero.name}'s ( ${relationType} )`}
                         />
                         <Icon
-                            name="clear"
+                            name={search ? "clear" : "search"}
                             size="large"
                             onPress={() => setSearch("")}
                         />
@@ -159,7 +141,7 @@ const HeroSelectionModal = ({
                         }}
                     >
                         <FlashList
-                            data={paginateList(filteredHeroes, 4 * 4)}
+                            data={filteredHeroes}
                             renderItem={renderItem}
                             keyExtractor={item => item.id.toString()}
                             showsVerticalScrollIndicator={false}

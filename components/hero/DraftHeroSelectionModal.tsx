@@ -12,11 +12,7 @@ import { TextField } from "@/components";
 import { increaseHexIntensity, reduceHexAlpha } from "@/utils";
 import { useTheme } from "@/contexts";
 import { HeroType } from "@/types";
-import {
-    RELATION_IMAGE_SIZE,
-    MODAL_CLASS_NAME,
-    paginateList
-} from "./HeroRelationsModal";
+import { RELATION_IMAGE_SIZE, MODAL_CLASS_NAME } from "./HeroRelationsModal";
 
 const HeroSelectionModal = ({
     visible,
@@ -80,27 +76,10 @@ const HeroSelectionModal = ({
         [onSelect]
     );
 
-    const batchSize = useMemo(() => 4 * 6, []);
-    const [visibleCount, setVisibleCount] = useState(batchSize);
-
-    useEffect(() => {
-        if (visibleCount < heroes.length) {
-            const timeout = setTimeout(() => {
-                setVisibleCount(prev => prev + batchSize);
-            }, 100);
-            return () => clearTimeout(timeout);
-        }
-    }, [visibleCount, heroes.length]);
-
-    const paginatedHeroes = useMemo(
-        () => heroes.slice(0, visibleCount),
-        [heroes, visibleCount]
-    );
-
     const memoizedList = useMemo(
         () => (
             <FlashList
-                data={paginatedHeroes}
+                data={heroes}
                 ref={listRef}
                 renderItem={renderItem}
                 keyExtractor={item => item.id.toString()}
@@ -109,18 +88,20 @@ const HeroSelectionModal = ({
                 keyboardShouldPersistTaps="handled"
             />
         ),
-        [renderItem, paginatedHeroes]
+        [renderItem, heroes]
     );
 
     const selectionTitleColor = useMemo(
         () =>
-            selectionTitle.includes("blue")
+            selectionTitle.includes("your")
                 ? colors.primary
-                : selectionTitle.includes("red")
+                : selectionTitle.includes("enemy")
                 ? colors.error
                 : colors.text,
         [selectionTitle, colors]
     );
+
+    useEffect(() => setSearch(""), [visible]);
 
     return (
         <Modal
@@ -136,12 +117,7 @@ const HeroSelectionModal = ({
                 }}
             >
                 <View style={modalStyle} className={MODAL_CLASS_NAME}>
-                    <View
-                        className="border-t my-4 justify-center items-center"
-                        style={{
-                            borderColor: selectionTitleColor
-                        }}
-                    >
+                    <View className="flex-row justify-center items-center border-b my-4">
                         <Text
                             className="absolute top-[-16px] px-2 text-lg"
                             style={{
@@ -154,7 +130,12 @@ const HeroSelectionModal = ({
                     </View>
 
                     <View className="flex-row items-center space-x-2 my-2">
-                        <Icon name="arrow-back-ios" onPress={onClose} />
+                        <Icon
+                            name="arrow-back-ios"
+                            size="large"
+                            onPress={onClose}
+                        />
+
                         <TextField
                             value={search}
                             onChangeText={setSearch}
@@ -162,7 +143,7 @@ const HeroSelectionModal = ({
                         />
 
                         <Icon
-                            name="clear"
+                            name={search ? "clear" : "search"}
                             size="large"
                             onPress={() => setSearch("")}
                         />
@@ -175,7 +156,7 @@ const HeroSelectionModal = ({
                         }}
                     >
                         <FlashList
-                            data={paginateList(filteredHeroes, 4 * 4)}
+                            data={filteredHeroes}
                             keyExtractor={keyExtractor}
                             renderItem={renderItem}
                             numColumns={4}

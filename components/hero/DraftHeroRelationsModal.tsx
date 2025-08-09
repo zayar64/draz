@@ -1,10 +1,7 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo } from "react";
 import {
     Modal,
-    TouchableOpacity,
-    PanResponder,
-    GestureResponderEvent,
-    PanResponderGestureState
+    TouchableOpacity
 } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { View, Text, Icon, HeroImage } from "@/components";
@@ -16,7 +13,6 @@ import { HeroType, RelationType } from "@/types";
 import {
     RELATION_IMAGE_SIZE,
     MODAL_CLASS_NAME,
-    paginateList
 } from "./HeroRelationsModal";
 
 const HeroRelationsModal = ({
@@ -134,7 +130,7 @@ const HeroRelationsModal = ({
                     <View />
 
                     <FlashList
-                        data={paginateList(data)}
+                        data={data}
                         renderItem={({ item }) => (
                             <HeroImage
                                 heroId={item.id}

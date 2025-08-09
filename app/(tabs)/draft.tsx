@@ -161,10 +161,10 @@ const Draft = () => {
         } else {
             setSelectionTitle(
                 team === blueTeam
-                    ? "Select for blue"
+                    ? "pick for your team"
                     : team === redTeam
-                    ? "Select for red"
-                    : "Ban a hero"
+                    ? "pick for enemy team"
+                    : "ban a hero"
             );
 
             setShowHeroSelections(true);
@@ -237,51 +237,52 @@ const Draft = () => {
     };
 
     const memoizedHeroRelations = useMemo(
-        () => 
-            selectedHero ? <DraftHeroRelationsModal
-                visible
-                hero={selectedHero}
-                relationType={relationType}
-                onClose={() => {
-                    setSelectedHero(null);
-                    setRelationType("Combo");
-                }}
-                setRelationType={setRelationType}
-                headerRight={
-                    excludedHeroes.find(
-                        item => item.id === selectedHero.id
-                    ) && (
-                        <Icon
-                            name="delete"
-                            color="error"
-                            onPress={async () => {
-                                setSelectedHero(null);
-                                const tmp =
-                                    heroToRemoveFrom === blueTeam
-                                        ? setBlueTeam
-                                        : heroToRemoveFrom === redTeam
-                                        ? setRedTeam
-                                        : heroToRemoveFrom === bannedHeroes
-                                        ? setBannedHeroes
-                                        : null;
-                                tmp?.(prev =>
-                                    prev.map(hero =>
-                                        hero?.id === selectedHero?.id
-                                            ? null
-                                            : hero
-                                    )
-                                );
-                                await applyRelations(
-                                    heroToRemoveFrom,
-                                    selectedHero!,
-                                    -1
-                                );
-                            }}
-                        />
-                    )
-                }
-            />
-         : null,
+        () =>
+            selectedHero ? (
+                <DraftHeroRelationsModal
+                    visible
+                    hero={selectedHero}
+                    relationType={relationType}
+                    onClose={() => {
+                        setSelectedHero(null);
+                        setRelationType("Combo");
+                    }}
+                    setRelationType={setRelationType}
+                    headerRight={
+                        excludedHeroes.find(
+                            item => item.id === selectedHero.id
+                        ) && (
+                            <Icon
+                                name="delete"
+                                color="error"
+                                onPress={async () => {
+                                    setSelectedHero(null);
+                                    const tmp =
+                                        heroToRemoveFrom === blueTeam
+                                            ? setBlueTeam
+                                            : heroToRemoveFrom === redTeam
+                                            ? setRedTeam
+                                            : heroToRemoveFrom === bannedHeroes
+                                            ? setBannedHeroes
+                                            : null;
+                                    tmp?.(prev =>
+                                        prev.map(hero =>
+                                            hero?.id === selectedHero?.id
+                                                ? null
+                                                : hero
+                                        )
+                                    );
+                                    await applyRelations(
+                                        heroToRemoveFrom,
+                                        selectedHero!,
+                                        -1
+                                    );
+                                }}
+                            />
+                        )
+                    }
+                />
+            ) : null,
         [selectedHero, relationType]
     );
 
@@ -306,7 +307,7 @@ const Draft = () => {
             <View className="flex-row space-x-4 justify-between">
                 <Icon name="refresh" onPress={handleResetDraft} size="large" />
 
-                <Icon
+                {/*<Icon
                     name="save"
                     onPress={
                         isPremiumUser
@@ -314,11 +315,11 @@ const Draft = () => {
                             : () => alertPremium(router)
                     }
                     size="large"
-                    /*disabled={
+                    disabled={
                         !blueTeam.every(item => item) ||
                         !redTeam.every(item => item)
-                    }*/
-                />
+                    }
+                />*/}
             </View>
 
             {/*<View className="border-b" />*/}

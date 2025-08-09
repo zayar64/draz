@@ -38,8 +38,6 @@ import {
 
 import { HeroRelationsModal, HeroSelectionModal } from "@/components/hero";
 
-import { paginateList } from "@/components/hero/HeroRelationsModal";
-
 import { useGlobal, useTheme, useUser } from "@/contexts";
 import { increaseHexIntensity } from "@/utils";
 import { RELATION_TYPES } from "@/constants";
@@ -252,7 +250,23 @@ function Home() {
         return heroes.filter(hero => hero.id !== selectedHero.id);
     }, [heroes, selectedHero]);
 
-    // Memoize modal once per hero selection
+    // Memoize modals once per hero selection
+    const memoizedHeroRelations = useMemo(
+        () =>
+            selectedHero ? (
+                <HeroRelationsModal
+                    visible
+                    hero={selectedHero}
+                    relationType={relationType}
+                    onClose={handleResetRelations}
+                    setRelationType={setRelationType}
+                    onPressAdd={() => setShowHeroSelections(true)}
+                    onPressHero={handleDeleteHeroRelation}
+                />
+            ) : null,
+        [selectedHero, relationType]
+    );
+
     const memoizedHeroSelection = useMemo(() => {
         if (!selectedHero) return null;
         return (
@@ -306,17 +320,7 @@ function Home() {
                         flex: 1
                     }}
                 >
-                    {selectedHero && (
-                        <HeroRelationsModal
-                            visible={true}
-                            hero={selectedHero}
-                            relationType={relationType}
-                            onClose={handleResetRelations}
-                            setRelationType={setRelationType}
-                            onPressAdd={() => setShowHeroSelections(true)}
-                            onPressHero={handleDeleteHeroRelation}
-                        />
-                    )}
+                    {memoizedHeroRelations}
 
                     {memoizedHeroSelection}
 
@@ -337,15 +341,11 @@ function Home() {
                             }}
                         />
 
-                        {search ? (
-                            <Icon
-                                name="clear"
-                                size="large"
-                                onPress={() => setSearch("")}
-                            />
-                        ) : (
-                            <Icon name="search" size="large" />
-                        )}
+                        <Icon
+                            name={search ? "clear" : "search"}
+                            size="large"
+                            onPress={() => setSearch("")}
+                        />
                     </View>
 
                     {/* HeroType Grid */}
@@ -359,7 +359,7 @@ function Home() {
                     >
                         <FlashList
                             showsVerticalScrollIndicator={false}
-                            data={paginateList(filteredHeroes, 5 * 6)}
+                            data={filteredHeroes}
                             renderItem={renderHero}
                             keyExtractor={keyExtractor}
                             numColumns={5}

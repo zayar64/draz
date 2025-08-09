@@ -14,24 +14,7 @@ import Confirm from "@/components/Confirm";
 import { HeroType, RelationType } from "@/types";
 
 export const RELATION_IMAGE_SIZE = 48;
-export const MODAL_CLASS_NAME = "h-[75%] rounded-xl border m-4 p-4 space-y-4";
-
-const SWIPE_THRESHOLD = 50;
-
-export const paginateList = (data: HeroType[], batchSize: number = 24) => {
-    const [visibleCount, setVisibleCount] = useState(batchSize);
-
-    useEffect(() => {
-        if (visibleCount < data.length) {
-            const timeout = setTimeout(() => {
-                setVisibleCount(prev => prev + batchSize);
-            }, 100);
-            return () => clearTimeout(timeout);
-        }
-    }, [visibleCount, data.length]);
-
-    return data.slice(0, visibleCount);
-};
+export const MODAL_CLASS_NAME = "h-[85%] rounded-xl border m-4 p-4 space-y-4";
 
 const HeroRelationsModal = ({
     visible,
@@ -150,7 +133,7 @@ const HeroRelationsModal = ({
                     <View />
 
                     <FlashList
-                        data={paginateList(data as HeroType[])}
+                        data={data as HeroType[]}
                         renderItem={renderItem}
                         showsVerticalScrollIndicator={false}
                         numColumns={4}
