@@ -150,7 +150,7 @@ export default function Menu() {
                       {
                           label: "Terminal",
                           icon: "terminal",
-                          onPress: () => router.push("/sqlite-terminal"),
+                          onPress: () => router.push("/sqlite-terminal" as any),
                           iconSrc: "material"
                       }
                   ]

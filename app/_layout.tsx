@@ -26,8 +26,8 @@ const RootLayout = () => {
 
     useEffect(() => {
         (async () => {
-          // Checking if database is already initialized
-          // Copy from assets if not
+            // Checking if database is already initialized
+            // Copy from assets if not
             try {
                 await db.getFirstAsync("SELECT * from migration");
             } catch (e) {
@@ -50,17 +50,18 @@ const RootLayout = () => {
     return (
         <ThemeProvider>
             <PaperProvider>
-            <UserProvider>
-                <GlobalProvider>
-                    <Stack
-                        screenOptions={{
-                            headerShown: false,
-                            animation: "none"
-                        }}
-                    >
-                        <Stack.Screen name="(tabs)" />
-                    </Stack>
-                </GlobalProvider>
+                <UserProvider>
+                    <GlobalProvider>
+                        <SafeAreaView />
+                            <Stack
+                                screenOptions={{
+                                    headerShown: false,
+                                    animation: "none"
+                                }}
+                            >
+                                <Stack.Screen name="(tabs)" />
+                            </Stack>
+                    </GlobalProvider>
                 </UserProvider>
             </PaperProvider>
         </ThemeProvider>

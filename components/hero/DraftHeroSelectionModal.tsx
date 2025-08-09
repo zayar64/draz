@@ -6,7 +6,7 @@ import React, {
     useEffect
 } from "react";
 import { Modal, TouchableOpacity } from "react-native";
-import { FlashList, FlashListRef } from "@shopify/flash-list";
+import { FlashList, FlashList as FlashListRef } from "@shopify/flash-list";
 import { View, Icon, HeroImage, Text } from "@/components";
 import { TextField } from "@/components";
 import { increaseHexIntensity, reduceHexAlpha } from "@/utils";

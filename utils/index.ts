@@ -8,7 +8,7 @@ export const alertPremium = async (router: Router) => {
         [
             {
                 text: "upgrade",
-                onPress: () => router.push("/premium-upgrade")
+                onPress: () => router.push("/premium-upgrade" as any)
             },
             {
                 text: ""

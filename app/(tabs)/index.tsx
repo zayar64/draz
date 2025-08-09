@@ -19,7 +19,7 @@ import {
 import { useRouter } from "expo-router";
 import kvstore from "expo-sqlite/kv-store";
 
-import { FlashList, FlashListRef } from "@shopify/flash-list";
+import { FlashList, FlashList as FlashListRef } from "@shopify/flash-list";
 import {
     getAllHeroes,
     createHeroRelation,
