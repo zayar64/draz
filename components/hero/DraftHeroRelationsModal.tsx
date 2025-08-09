@@ -19,8 +19,6 @@ import {
     paginateList
 } from "./HeroRelationsModal";
 
-const SWIPE_THRESHOLD = 50;
-
 const HeroRelationsModal = ({
     visible,
     hero,
@@ -62,7 +60,7 @@ const HeroRelationsModal = ({
             transparent
             visible={visible}
             onRequestClose={onClose}
-            //animationType="fade"
+            animationType="fade"
         >
             <View
                 className="flex-1 justify-center"
@@ -154,4 +152,4 @@ const HeroRelationsModal = ({
     );
 };
 
-export default HeroRelationsModal;
+export default React.memo(HeroRelationsModal, (prev, next) => prev.hero === next.hero && prev.relationType === next.relationType);

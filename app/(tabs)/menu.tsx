@@ -104,7 +104,7 @@ export default function Menu() {
                 }
             ]
         },
-        {
+        /*{
             title: "More",
             items: [
                 {
@@ -114,7 +114,7 @@ export default function Menu() {
                     iconSrc: "material"
                 }
             ]
-        },
+        },*/
         iAmDeveloper === "1"
             ? {
                   title: "Developer Options",

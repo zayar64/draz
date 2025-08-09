@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Alert, TouchableOpacity, ScrollView } from "react-native";
-import { useRouter } from "expo-router"
+import { useRouter } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
 
 import { Container, View, Text, Icon, IconButton, Button } from "@/components";
@@ -51,7 +51,7 @@ const Draft = () => {
 
     const { colors } = useTheme();
     const { isPremiumUser } = useUser();
-    const router = useRouter()
+    const router = useRouter();
 
     useEffect(() => {
         getAllHeroes().then(setHeroes);
@@ -67,7 +67,7 @@ const Draft = () => {
 
     const availableHeroes = useMemo(
         () => heroes.filter(h => !excludedHeroes.some(e => e.id === h.id)),
-        [heroes, blueTeam, redTeam, bannedHeroes]
+        [excludedHeroes]
     );
 
     useEffect(() => {
@@ -236,6 +236,71 @@ const Draft = () => {
         });
     };
 
+    const memoizedHeroRelations = useMemo(
+        () => 
+            selectedHero ? <DraftHeroRelationsModal
+                visible
+                hero={selectedHero}
+                relationType={relationType}
+                onClose={() => {
+                    setSelectedHero(null);
+                    setRelationType("Combo");
+                }}
+                setRelationType={setRelationType}
+                headerRight={
+                    excludedHeroes.find(
+                        item => item.id === selectedHero.id
+                    ) && (
+                        <Icon
+                            name="delete"
+                            color="error"
+                            onPress={async () => {
+                                setSelectedHero(null);
+                                const tmp =
+                                    heroToRemoveFrom === blueTeam
+                                        ? setBlueTeam
+                                        : heroToRemoveFrom === redTeam
+                                        ? setRedTeam
+                                        : heroToRemoveFrom === bannedHeroes
+                                        ? setBannedHeroes
+                                        : null;
+                                tmp?.(prev =>
+                                    prev.map(hero =>
+                                        hero?.id === selectedHero?.id
+                                            ? null
+                                            : hero
+                                    )
+                                );
+                                await applyRelations(
+                                    heroToRemoveFrom,
+                                    selectedHero!,
+                                    -1
+                                );
+                            }}
+                        />
+                    )
+                }
+            />
+         : null,
+        [selectedHero, relationType]
+    );
+
+    const memoizedHeroSelection = useMemo(
+        () => (
+            <DraftHeroSelectionModal
+                visible={showHeroSelections}
+                onClose={() => {
+                    setShowHeroSelections(false);
+                    setSelectionTitle("");
+                }}
+                heroes={availableHeroes}
+                onSelect={hero => onSelect && onSelect(hero)}
+                selectionTitle={selectionTitle}
+            />
+        ),
+        [showHeroSelections, availableHeroes]
+    );
+
     return (
         <Container className="space-y-4">
             <View className="flex-row space-x-4 justify-between">
@@ -243,7 +308,11 @@ const Draft = () => {
 
                 <Icon
                     name="save"
-                    onPress={isPremiumUser ? () => alert("Function is not yet implemented :3") : ()=>alertPremium(router)}
+                    onPress={
+                        isPremiumUser
+                            ? () => alert("Function is not yet implemented :3")
+                            : () => alertPremium(router)
+                    }
                     size="large"
                     /*disabled={
                         !blueTeam.every(item => item) ||
@@ -319,63 +388,9 @@ const Draft = () => {
                 />
             ))}
 
-            {selectedHero && (
-                <DraftHeroRelationsModal
-                    visible
-                    hero={selectedHero}
-                    relationType={relationType}
-                    onClose={() => {
-                        setSelectedHero(null);
-                        setRelationType("Combo");
-                    }}
-                    setRelationType={setRelationType}
-                    headerRight={
-                        excludedHeroes.find(
-                            item => item.id === selectedHero.id
-                        ) && (
-                            <Icon
-                                name="delete"
-                                color="error"
-                                onPress={async () => {
-                                    setSelectedHero(null);
-                                    const tmp =
-                                        heroToRemoveFrom === blueTeam
-                                            ? setBlueTeam
-                                            : heroToRemoveFrom === redTeam
-                                            ? setRedTeam
-                                            : heroToRemoveFrom === bannedHeroes
-                                            ? setBannedHeroes
-                                            : null;
-                                    tmp?.(prev =>
-                                        prev.map(hero =>
-                                            hero?.id === selectedHero?.id
-                                                ? null
-                                                : hero
-                                        )
-                                    );
-                                    await applyRelations(
-                                        heroToRemoveFrom,
-                                        selectedHero!,
-                                        -1
-                                    );
-                                }}
-                            />
-                        )
-                    }
-                />
-            )}
+            {memoizedHeroRelations}
 
-            {showHeroSelections && (
-                <DraftHeroSelectionModal
-                    visible
-                    onClose={() => {
-                        setShowHeroSelections(false);
-                    }}
-                    heroes={availableHeroes}
-                    onSelect={hero => onSelect && onSelect(hero)}
-                    selectionTitle={selectionTitle}
-                />
-            )}
+            {memoizedHeroSelection}
         </Container>
     );
 };

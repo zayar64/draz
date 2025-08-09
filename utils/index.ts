@@ -1,10 +1,10 @@
 import { Alert } from "react-native";
-import type { Router } from "expo-router"
+import type { Router } from "expo-router";
 
 export const alertPremium = async (router: Router) => {
     await Alert.alert(
-        "Notice",
-        "You need to be a premium user for this feature",
+        "Premiun Access",
+        "You are not a premium user. Upgrade to be a premium user ?",
         [
             {
                 text: "upgrade",
@@ -14,7 +14,7 @@ export const alertPremium = async (router: Router) => {
                 text: ""
             },
             {
-                text: "OK",
+                text: "no, thanks",
                 onPress: () => {}
             }
         ]

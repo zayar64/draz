@@ -92,10 +92,15 @@ const HeroSelectionModal = ({
         }
     }, [visibleCount, heroes.length]);
 
+    const paginatedHeroes = useMemo(
+        () => heroes.slice(0, visibleCount),
+        [heroes, visibleCount]
+    );
+
     const memoizedList = useMemo(
         () => (
             <FlashList
-                data={heroes.slice(0, visibleCount)}
+                data={paginatedHeroes}
                 ref={listRef}
                 renderItem={renderItem}
                 keyExtractor={item => item.id.toString()}
@@ -104,7 +109,7 @@ const HeroSelectionModal = ({
                 keyboardShouldPersistTaps="handled"
             />
         ),
-        [heroes, renderItem, visibleCount, listRef]
+        [renderItem, paginatedHeroes]
     );
 
     const selectionTitleColor = useMemo(
@@ -122,7 +127,7 @@ const HeroSelectionModal = ({
             transparent
             visible={visible}
             onRequestClose={onClose}
-            //animationType="fade"
+            animationType="fade"
         >
             <View
                 className="flex-1 justify-center"
@@ -155,13 +160,12 @@ const HeroSelectionModal = ({
                             onChangeText={setSearch}
                             className="flex-1"
                         />
-                        {search.length > 0 && (
-                            <Icon
-                                name="clear"
-                                size="large"
-                                onPress={() => setSearch("")}
-                            />
-                        )}
+
+                        <Icon
+                            name="clear"
+                            size="large"
+                            onPress={() => setSearch("")}
+                        />
                     </View>
 
                     <View
@@ -188,4 +192,12 @@ const HeroSelectionModal = ({
     );
 };
 
-export default React.memo(HeroSelectionModal);
+export default React.memo(
+    HeroSelectionModal,
+    (prev, next) =>
+        //prev.visible === next.visible &&
+        prev.onClose === next.onClose &&
+        prev.heroes === next.heroes &&
+        prev.onSelect === next.onSelect &&
+        prev.selectionTitle === next.selectionTitle
+);

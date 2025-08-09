@@ -18,6 +18,8 @@ import {
     paginateList
 } from "./HeroRelationsModal";
 
+const BATCH_SIZE = 4 * 6;
+
 const HeroSelectionModal = ({
     visible,
     selectedHero,
@@ -49,6 +51,7 @@ const HeroSelectionModal = ({
                     //animated: true
                 });
             }, 100);
+
             return heroes.filter(h =>
                 h.name.toLowerCase().startsWith(lowerCaseSearch)
             );
@@ -86,22 +89,26 @@ const HeroSelectionModal = ({
         [selectedHero, relationType, onSelect]
     );
 
-    const batchSize = useMemo(() => 4 * 6, []);
-    const [visibleCount, setVisibleCount] = useState(batchSize);
+    const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
 
     useEffect(() => {
         if (visibleCount < heroes.length) {
             const timeout = setTimeout(() => {
-                setVisibleCount(prev => prev + batchSize);
+                setVisibleCount(prev => prev + BATCH_SIZE);
             }, 100);
             return () => clearTimeout(timeout);
         }
     }, [visibleCount, heroes.length]);
 
+    const paginatedHeroes = useMemo(
+        () => heroes.slice(0, visibleCount),
+        [heroes, visibleCount]
+    );
+
     const memoizedList = useMemo(
         () => (
             <FlashList
-                data={heroes.slice(0, visibleCount)}
+                data={paginatedHeroes}
                 ref={listRef}
                 renderItem={renderItem}
                 keyExtractor={item => item.id.toString()}
@@ -110,7 +117,7 @@ const HeroSelectionModal = ({
                 keyboardShouldPersistTaps="handled"
             />
         ),
-        [heroes, renderItem, visibleCount, listRef]
+        [renderItem, paginatedHeroes]
     );
 
     return (
@@ -118,7 +125,7 @@ const HeroSelectionModal = ({
             transparent
             visible={visible}
             onRequestClose={onClose}
-            animationType="fade"
+            //animationType="fade"
         >
             <View className="flex-1 justify-center">
                 <View
@@ -138,13 +145,11 @@ const HeroSelectionModal = ({
                             className="grow"
                             label={`Search ${selectedHero.name}'s ( ${relationType} )`}
                         />
-                        {search && (
-                            <Icon
-                                name="clear"
-                                size="large"
-                                onPress={() => setSearch("")}
-                            />
-                        )}
+                        <Icon
+                            name="clear"
+                            size="large"
+                            onPress={() => setSearch("")}
+                        />
                     </View>
 
                     <View
@@ -171,4 +176,13 @@ const HeroSelectionModal = ({
     );
 };
 
-export default HeroSelectionModal;
+export default React.memo(
+    HeroSelectionModal,
+    (prev, next) =>
+        //prev.visible === next.visible &&
+        prev.selectedHero === next.selectedHero &&
+        prev.onClose === next.onClose &&
+        prev.heroes === next.heroes &&
+        prev.onSelect === next.onSelect &&
+        prev.relationType === next.relationType
+);

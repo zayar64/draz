@@ -32,7 +32,9 @@ const RootLayout = () => {
                 await db.getFirstAsync("SELECT * from migration");
             } catch (e) {
                 await copyDatabaseFromAssets();
-                await Updates.reloadAsync();
+                setTimeout(async () => {
+                    await Updates.reloadAsync();
+                }, 500);
             }
         })();
     }, []);
@@ -53,14 +55,14 @@ const RootLayout = () => {
                 <UserProvider>
                     <GlobalProvider>
                         <SafeAreaView />
-                            <Stack
-                                screenOptions={{
-                                    headerShown: false,
-                                    animation: "none"
-                                }}
-                            >
-                                <Stack.Screen name="(tabs)" />
-                            </Stack>
+                        <Stack
+                            screenOptions={{
+                                headerShown: false,
+                                animation: "none"
+                            }}
+                        >
+                            <Stack.Screen name="(tabs)" />
+                        </Stack>
                     </GlobalProvider>
                 </UserProvider>
             </PaperProvider>

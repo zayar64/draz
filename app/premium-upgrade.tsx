@@ -12,7 +12,7 @@ const PremiumCheckout = () => {
     const [userInput, setUserInput] = useState<string>("");
     const [copiedToClipboard, setCopiedToClipboard] = useState<boolean>(false);
 
-    const { colors } = useTheme();
+    const { colors, fontSize } = useTheme();
     const { setIsPremiumUser } = useUser();
     const router = useRouter();
 
@@ -52,17 +52,17 @@ const PremiumCheckout = () => {
             </View>
 
             <View
-                className="rounded border p-2"
+                className="rounded border p-2 space-y-2"
                 style={{
                     borderColor: colors.primary
                 }}
             >
-                <Icon name="info-outline" color="primary" />
-
-                <Text className="text-xs">
+                <Text>
                     Copy the Temporary ID and send it to Zayar Minn and request
-                    for Premium Key
+                    for Premium Key.
                 </Text>
+
+                <Text>The ID will be reset each time app refreshes.</Text>
             </View>
 
             <TextField
@@ -78,7 +78,7 @@ const PremiumCheckout = () => {
                         setIsPremiumUser(true);
                         router.back();
                     } else {
-                      alert("Invalid Key")
+                        alert("Invalid Key");
                     }
                 }}
             />

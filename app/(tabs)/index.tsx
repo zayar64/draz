@@ -111,13 +111,10 @@ function Home() {
     // Fetch heroes once
     useEffect(() => {
         (async () => {
-            setLoading(true);
             try {
                 setHeroes(await getAllHeroes());
             } catch (e: any) {
                 alert(e.message);
-            } finally {
-                setLoading(false);
             }
         })();
     }, [setLoading]);
@@ -249,6 +246,36 @@ function Home() {
         [router]
     );
 
+    // Precompute heroes for selection
+    const selectableHeroes = useMemo(() => {
+        if (!selectedHero) return [];
+        return heroes.filter(hero => hero.id !== selectedHero.id);
+    }, [heroes, selectedHero]);
+
+    // Memoize modal once per hero selection
+    const memoizedHeroSelection = useMemo(() => {
+        if (!selectedHero) return null;
+        return (
+            <HeroSelectionModal
+                visible={showHeroSelections} // Only visibility changes now
+                selectedHero={selectedHero}
+                onClose={() => setShowHeroSelections(false)}
+                heroes={selectableHeroes}
+                onSelect={async hero => {
+                    await handleAddHeroRelation(hero);
+                    setShowHeroSelections(false);
+                }}
+                relationType={relationType}
+            />
+        );
+    }, [
+        selectedHero,
+        showHeroSelections,
+        selectableHeroes,
+        handleAddHeroRelation,
+        relationType
+    ]);
+
     const memoizedAllHeroes = useMemo(
         () => (
             <FlashList
@@ -259,16 +286,6 @@ function Home() {
                 keyExtractor={keyExtractor}
                 numColumns={5}
                 keyboardShouldPersistTaps="handled"
-                ListEmptyComponent={
-                    <Text
-                        className="m-4 text-center"
-                        style={{
-                            color: colors.error
-                        }}
-                    >
-                        No Heroes Found
-                    </Text>
-                }
             />
         ),
         [heroes, renderHero, keyExtractor, colors, allHeroListRef]
@@ -301,23 +318,7 @@ function Home() {
                         />
                     )}
 
-                    {selectedHero && showHeroSelections && (
-                        <HeroSelectionModal
-                            visible={true}
-                            selectedHero={selectedHero}
-                            onClose={() => {
-                                setShowHeroSelections(false);
-                            }}
-                            heroes={heroes.filter(
-                                hero => hero.id !== selectedHero.id
-                            )}
-                            onSelect={async hero => {
-                                await handleAddHeroRelation(hero);
-                                setShowHeroSelections(false);
-                            }}
-                            relationType={relationType}
-                        />
-                    )}
+                    {memoizedHeroSelection}
 
                     {/* Search Bar */}
                     <View className="flex-row items-center p-4 space-x-2 border-b">
@@ -363,16 +364,6 @@ function Home() {
                             keyExtractor={keyExtractor}
                             numColumns={5}
                             keyboardShouldPersistTaps="handled"
-                            ListEmptyComponent={
-                                <Text
-                                    className="m-4 text-center"
-                                    style={{
-                                        color: colors.error
-                                    }}
-                                >
-                                    No Heroes Found
-                                </Text>
-                            }
                         />
                     </View>
                 </View>
