@@ -11,8 +11,7 @@ interface ImageType {
     name?: string;
     size?: number;
     margin?: number;
-    disabled?: boolean;
-    imageStyle?: Record<string, string | number>
+    imageStyle?: Record<string, string | number>;
 }
 
 const DEFAULT_SIZE = 52;
@@ -22,7 +21,6 @@ const HeroImage = ({
     name,
     size = DEFAULT_SIZE,
     margin = 12,
-    disabled,
     imageStyle
 }: ImageType) => {
     const image = heroImageMapping[heroId];
@@ -32,21 +30,18 @@ const HeroImage = ({
         <View
             className="flex-col justify-center items-center"
             style={{
-                margin
+                margin,
             }}
         >
             <View
-                style={
-                    [
-                        {
-                            width: size,
-                            height: size,
-                            borderWidth
-                        },
-                        imageStyle
-                    ]
-                    
-                }
+                style={[
+                    {
+                        width: size,
+                        height: size,
+                        borderWidth
+                    },
+                    imageStyle
+                ]}
                 className="rounded-full"
             >
                 <Image

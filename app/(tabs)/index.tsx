@@ -42,6 +42,7 @@ import { useGlobal, useTheme, useUser } from "@/contexts";
 import { increaseHexIntensity } from "@/utils";
 import { RELATION_TYPES } from "@/constants";
 import { HeroType } from "@/types";
+import { useExitPrevention } from "@/hooks";
 
 // Constants
 const RELATION_IMAGE_SIZE = 44;
@@ -99,6 +100,8 @@ function Home() {
     const router = useRouter();
     const allHeroListRef = useRef<FlashListRef<HeroType>>(null);
 
+    useExitPrevention(!!search, () => setSearch(""));
+
     const modalStyle: StyleProp<ViewStyle> = useMemo(
         () => ({
             backgroundColor: increaseHexIntensity(colors.background, 0.2)
@@ -139,31 +142,30 @@ function Home() {
         setShowHeroSelections(false);
     }, []);
 
-    const refreshRelations = useCallback(async (hero: HeroType) => {
-        hero.relations = await getHeroRelations(hero);
-    }, []);
-
-    const updateHeroesState = useCallback((h1: HeroType, h2: HeroType) => {
-        setHeroes(prev =>
-            prev.map(h => (h.id === h1.id ? h1 : h.id === h2.id ? h2 : h))
-        );
-    }, []);
+    const handleChangeSelectedHero = async (hero: HeroType) => {
+        const relations = await getHeroRelations(hero);
+        setSelectedHero({
+            ...hero,
+            relations
+        });
+    };
 
     const handleAddHeroRelation = useCallback(
         async (target: HeroType) => {
-            if (!selectedHero) return;
-            await createHeroRelation({
-                mainHeroId: selectedHero.id,
-                targetHeroId: target.id,
-                relationType
-            });
-            await Promise.all([
-                refreshRelations(selectedHero),
-                refreshRelations(target)
-            ]);
-            updateHeroesState(selectedHero, target);
+            try {
+                if (!selectedHero) return;
+                await createHeroRelation({
+                    mainHeroId: selectedHero.id,
+                    targetHeroId: target.id,
+                    relationType
+                });
+
+                await handleChangeSelectedHero(selectedHero);
+            } catch (e) {
+                console.error(e);
+            }
         },
-        [relationType, refreshRelations, updateHeroesState, selectedHero]
+        [relationType, selectedHero]
     );
 
     const handleDeleteHeroRelation = useCallback(
@@ -174,29 +176,11 @@ function Home() {
                 targetHeroId: target.id,
                 relationType
             });
-            await Promise.all([
-                refreshRelations(selectedHero),
-                refreshRelations(target)
-            ]);
-            updateHeroesState(selectedHero, target);
+
+            await handleChangeSelectedHero(selectedHero);
         },
-        [relationType, refreshRelations, updateHeroesState, selectedHero]
+        [relationType, selectedHero]
     );
-
-    const handleChangeSelectedHero = async (hero: HeroType) => {
-        setSelectedHero({
-            ...hero,
-            relations: await getHeroRelations(hero)
-        });
-
-        setRelationType(
-            relationType === "Combo"
-                ? "Combo"
-                : relationType === "Weak Vs"
-                ? "Strong Vs"
-                : "Weak Vs"
-        );
-    };
 
     // Renderers
     const renderHero = useCallback(
@@ -218,7 +202,6 @@ function Home() {
                         `Add ${item.name} to ${selectedHero?.name} ( ${relationType}) ?`,
                         async () => {
                             await handleAddHeroRelation(item);
-                            setShowHeroSelections(false);
                         }
                     )
                 }
@@ -237,9 +220,14 @@ function Home() {
 
     const specialSearcheFunctions: Record<string, () => void> = useMemo(
         () => ({
-            "i am developer": async () => kvstore.setItem("iAmDeveloper", "1"),
-            "i am not developer": async () =>
-                kvstore.setItem("iAmDeveloper", "0")
+            "i am developer": async () => {
+                setIsPremiumUser(true);
+                kvstore.setItem("iAmDeveloper", "1");
+            },
+            "i am not developer": async () => {
+                setIsPremiumUser(false);
+                kvstore.setItem("iAmDeveloper", "0");
+            }
         }),
         [router]
     );
@@ -251,21 +239,20 @@ function Home() {
     }, [heroes, selectedHero]);
 
     // Memoize modals once per hero selection
-    const memoizedHeroRelations = useMemo(
-        () =>
-            selectedHero ? (
-                <HeroRelationsModal
-                    visible
-                    hero={selectedHero}
-                    relationType={relationType}
-                    onClose={handleResetRelations}
-                    setRelationType={setRelationType}
-                    onPressAdd={() => setShowHeroSelections(true)}
-                    onPressHero={handleDeleteHeroRelation}
-                />
-            ) : null,
-        [selectedHero, relationType]
-    );
+    const memoizedHeroRelations = useMemo(() => {
+        if (!selectedHero) return;
+        return (
+            <HeroRelationsModal
+                visible
+                hero={selectedHero}
+                relationType={relationType}
+                onClose={handleResetRelations}
+                setRelationType={setRelationType}
+                onPressAdd={() => setShowHeroSelections(true)}
+                onPressHero={handleDeleteHeroRelation}
+            />
+        );
+    }, [selectedHero, relationType]);
 
     const memoizedHeroSelection = useMemo(() => {
         if (!selectedHero) return null;

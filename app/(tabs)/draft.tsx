@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Alert, TouchableOpacity, ScrollView } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
 
 import { Container, View, Text, Icon, IconButton, Button } from "@/components";
@@ -30,14 +30,17 @@ const Draft = () => {
     const [bannedHeroes, setBannedHeroes] = useState<(HeroType | null)[]>(
         Array(10).fill(null)
     );
-    const [recommendations, setRecommendations] = useState<
-        Record<string, Record<string, number>>
-    >({
-        "Recommended Counter Picks": {},
-        "Recommended Combo Picks": {},
-        "Not Recommended Picks": {},
-        "Recommended To Ban": {}
-    });
+
+    const [counterPicks, setCounterPicks] = useState<Record<string, number>>(
+        {}
+    );
+    const [comboPicks, setComboPicks] = useState<Record<string, number>>({});
+    const [counteredPicks, setCounteredPicks] = useState<
+        Record<string, number>
+    >({});
+    const [enemyCounterPicks, setEnemyCounterPicks] = useState<
+        Record<string, number>
+    >({});
 
     const [showHeroSelections, setShowHeroSelections] = useState(false);
     const [onSelect, setOnSelect] = useState<null | ((hero: HeroType) => void)>(
@@ -45,9 +48,6 @@ const Draft = () => {
     );
     const [selectedHero, setSelectedHero] = useState<HeroType | null>(null);
     const [relationType, setRelationType] = useState<RelationType>("Combo");
-    const [heroToRemoveFrom, setHeroToRemoveFrom] = useState<
-        (HeroType | null)[]
-    >(Array(5).fill(null));
 
     const { colors } = useTheme();
     const { isPremiumUser } = useUser();
@@ -58,93 +58,101 @@ const Draft = () => {
     }, []);
 
     const excludedHeroes = useMemo(() => {
-        return heroes.filter(hero =>
-            [...blueTeam, ...redTeam, ...bannedHeroes].some(
-                h => h?.id === hero.id
-            )
-        );
-    }, [heroes, blueTeam, redTeam, bannedHeroes]);
+        const exc: Record<string, true> = {};
+        const selectedHeroes = [
+            ...blueTeam,
+            ...redTeam,
+            ...bannedHeroes
+        ].filter(h => h);
+
+        selectedHeroes.map(hero => {
+            if (hero) {
+                exc[hero.id] = true;
+            }
+        });
+
+        return exc;
+    }, [blueTeam, redTeam, bannedHeroes]);
+
+    const updateRecommendation = useCallback(
+        async (
+            team: (HeroType | null)[],
+            typeToSet: RelationType,
+            setter: (recom: Record<string, number>) => void
+        ) => {
+            const heroes = team.filter((h): h is HeroType => h !== null);
+
+            const allRelations = await Promise.all(
+                heroes.map(hero => getHeroRelations(hero))
+            );
+
+            // Count recommendations
+            const recom: Record<string, number> = {};
+            allRelations.forEach(relations => {
+                relations[typeToSet].forEach(({ id }) => {
+                    recom[id] = (recom[id] || 0) + 1;
+                });
+            });
+
+            setter(recom);
+        },
+        []
+    );
+
+    useEffect(() => {
+        (async () => {
+            await Promise.all([
+                updateRecommendation(blueTeam, "Combo", setComboPicks),
+                updateRecommendation(blueTeam, "Weak Vs", setEnemyCounterPicks)
+            ]);
+        })();
+    }, [blueTeam]);
+
+    useEffect(() => {
+        (async () => {
+            await Promise.all([
+                updateRecommendation(redTeam, "Weak Vs", setCounterPicks),
+                updateRecommendation(redTeam, "Strong Vs", setCounteredPicks)
+            ]);
+        })();
+    }, [redTeam]);
+
+    useFocusEffect(
+        useCallback(() => {
+            (async () => {
+                await Promise.all([
+                    updateRecommendation(blueTeam, "Combo", setComboPicks),
+                    updateRecommendation(
+                        blueTeam,
+                        "Weak Vs",
+                        setEnemyCounterPicks
+                    ),
+                    updateRecommendation(redTeam, "Weak Vs", setCounterPicks),
+                    updateRecommendation(
+                        redTeam,
+                        "Strong Vs",
+                        setCounteredPicks
+                    )
+                ]);
+            })();
+
+            return () => {
+                //setComboPicks({});
+                //setCounterPicks({});
+                //setCounteredPicks({});
+                //setEnemyCounterPicks({});
+            };
+        }, [blueTeam, redTeam, updateRecommendation])
+    );
 
     const availableHeroes = useMemo(
-        () => heroes.filter(h => !excludedHeroes.some(e => e.id === h.id)),
-        [excludedHeroes]
+        () => heroes.filter(h => !excludedHeroes[h.id]),
+        [heroes, excludedHeroes]
     );
 
     useEffect(() => {
         setSelectedHero(null);
     }, [excludedHeroes]);
-
-    const updateMap = (
-        target: HeroType[],
-        source: Record<string, number>,
-        increment: number
-    ) =>
-        target.reduce(
-            (acc, hero) => {
-                acc[hero.id] = (source[hero.id] || 0) + increment;
-                return acc;
-            },
-            {} as Record<string, number>
-        );
-
-    const applyRelations = useCallback(
-        async (
-            team: (HeroType | null)[],
-            hero: HeroType,
-            increment: number
-        ) => {
-            const isBlue = team === blueTeam;
-            const isRed = team === redTeam;
-
-            try {
-                const relations = await getHeroRelations(hero);
-                const next = { ...recommendations };
-
-                if (isBlue) {
-                    Object.assign(
-                        next["Recommended Combo Picks"],
-                        updateMap(
-                            relations.Combo,
-                            next["Recommended Combo Picks"],
-                            increment
-                        )
-                    );
-                    Object.assign(
-                        next["Recommended To Ban"],
-                        updateMap(
-                            relations["Weak Vs"],
-                            next["Recommended To Ban"],
-                            increment
-                        )
-                    );
-                }
-
-                if (isRed) {
-                    Object.assign(
-                        next["Not Recommended Picks"],
-                        updateMap(
-                            relations["Strong Vs"],
-                            next["Not Recommended Picks"],
-                            increment
-                        )
-                    );
-                    Object.assign(
-                        next["Recommended Counter Picks"],
-                        updateMap(
-                            relations["Weak Vs"],
-                            next["Recommended Counter Picks"],
-                            increment
-                        )
-                    );
-                }
-
-                setRecommendations(next);
-            } catch (e: any) {
-                alert(e.message);
-            }
-        },
-        [recommendations, blueTeam, redTeam]
-    );
 
     const [selectionTitle, setSelectionTitle] = useState<string>("");
     const handleHeroToggle = async (
@@ -154,9 +162,10 @@ const Draft = () => {
         hero: HeroType | null
     ) => {
         if (hero) {
+            const relations = await getHeroRelations(hero);
             setSelectedHero({
                 ...hero,
-                relations: await getHeroRelations(hero)
+                relations
             });
         } else {
             setSelectionTitle(
@@ -175,9 +184,6 @@ const Draft = () => {
                     return next;
                 });
                 setShowHeroSelections(false);
-                if (team === blueTeam || team === redTeam) {
-                    await applyRelations(team, selected, 1);
-                }
             });
         }
     };
@@ -192,31 +198,15 @@ const Draft = () => {
         }
         const relations = await getHeroRelations(hero);
 
-        let heroesToDisplayIds = blueTeam.filter(h => h).map(h => h?.id);
-
         if (
             ["Recommended Counter Picks", "Recommended To Ban"].includes(
                 recommendationTitle
             )
         ) {
             setRelationType("Strong Vs");
-            if (recommendationTitle === "Recommended Counter Picks") {
-                heroesToDisplayIds = redTeam.filter(h => h).map(h => h?.id);
-            }
         } else if (recommendationTitle === "Not Recommended Picks") {
             setRelationType("Weak Vs");
-            heroesToDisplayIds = redTeam.filter(h => h).map(h => h?.id);
         }
-
-        relations.Combo = relations.Combo.filter(h =>
-            heroesToDisplayIds.includes(h.id)
-        );
-        relations["Weak Vs"] = relations["Weak Vs"].filter(h =>
-            heroesToDisplayIds.includes(h.id)
-        );
-        relations["Strong Vs"] = relations["Strong Vs"].filter(h =>
-            heroesToDisplayIds.includes(h.id)
-        );
 
         setSelectedHero({
             ...hero,
@@ -228,13 +218,13 @@ const Draft = () => {
         setBlueTeam(Array(5).fill(null));
         setRedTeam(Array(5).fill(null));
         setBannedHeroes(Array(10).fill(null));
-        setRecommendations({
-            "Recommended Counter Picks": {},
-            "Recommended Combo Picks": {},
-            "Not Recommended Picks": {},
-            "Recommended To Ban": {}
-        });
     };
+
+    const handleRemoveHero = useCallback((heroId: number) => {
+        setBlueTeam(prev => prev.map(h => (h?.id === heroId ? null : h)));
+        setRedTeam(prev => prev.map(h => (h?.id === heroId ? null : h)));
+        setBannedHeroes(prev => prev.map(h => (h?.id === heroId ? null : h)));
+    }, []);
 
     const memoizedHeroRelations = useMemo(
         () =>
@@ -243,40 +233,20 @@ const Draft = () => {
                     visible
                     hero={selectedHero}
                     relationType={relationType}
+                    setRelationType={setRelationType}
                     onClose={() => {
                         setSelectedHero(null);
                         setRelationType("Combo");
                     }}
-                    setRelationType={setRelationType}
+                    excludedHeroes={excludedHeroes}
                     headerRight={
-                        excludedHeroes.find(
-                            item => item.id === selectedHero.id
-                        ) && (
+                        excludedHeroes[selectedHero.id] && (
                             <Icon
                                 name="delete"
                                 color="error"
-                                onPress={async () => {
+                                onPress={() => {
+                                    handleRemoveHero(selectedHero.id);
                                     setSelectedHero(null);
-                                    const tmp =
-                                        heroToRemoveFrom === blueTeam
-                                            ? setBlueTeam
-                                            : heroToRemoveFrom === redTeam
-                                            ? setRedTeam
-                                            : heroToRemoveFrom === bannedHeroes
-                                            ? setBannedHeroes
-                                            : null;
-                                    tmp?.(prev =>
-                                        prev.map(hero =>
-                                            hero?.id === selectedHero?.id
-                                                ? null
-                                                : hero
-                                        )
-                                    );
-                                    await applyRelations(
-                                        heroToRemoveFrom,
-                                        selectedHero!,
-                                        -1
-                                    );
                                 }}
                             />
                         )
@@ -322,14 +292,11 @@ const Draft = () => {
                 />*/}
             </View>
 
-            {/*<View className="border-b" />*/}
-
             <TeamSection
                 title="Your Picks"
                 team={blueTeam}
                 onSlotPress={(idx, hero) => {
                     handleHeroToggle(blueTeam, setBlueTeam, idx, hero);
-                    setHeroToRemoveFrom(blueTeam);
                 }}
             />
 
@@ -359,7 +326,6 @@ const Draft = () => {
                 team={redTeam}
                 onSlotPress={(idx, hero) => {
                     handleHeroToggle(redTeam, setRedTeam, idx, hero);
-                    setHeroToRemoveFrom(redTeam);
                 }}
             />
 
@@ -368,26 +334,44 @@ const Draft = () => {
                 bannedHeroes={bannedHeroes}
                 onSlotPress={(idx, hero) => {
                     handleHeroToggle(bannedHeroes, setBannedHeroes, idx, hero);
-                    setHeroToRemoveFrom(bannedHeroes);
                 }}
             />
 
-            {Object.entries(recommendations).map(([title, entries]) => (
-                <RecommendationBox
-                    key={title}
-                    title={title}
-                    data={Object.entries(entries)
-                        .filter(([, count]) => count)
-                        .sort((a, b) => b[1] - a[1])}
-                    excludedHeroes={excludedHeroes}
-                    onSlotPress={(heroId, recommendationTitle) =>
-                        handleRecommendationSlotPress(
-                            heroId,
-                            recommendationTitle
-                        )
-                    }
-                />
-            ))}
+            <RecommendationBox
+                title="Recommended Counter Picks"
+                data={counterPicks}
+                excludedHeroes={excludedHeroes}
+                onSlotPress={(heroId, recommendationTitle) =>
+                    handleRecommendationSlotPress(heroId, recommendationTitle)
+                }
+            />
+
+            <RecommendationBox
+                title="Recommended Combo Picks"
+                data={comboPicks}
+                excludedHeroes={excludedHeroes}
+                onSlotPress={(heroId, recommendationTitle) =>
+                    handleRecommendationSlotPress(heroId, recommendationTitle)
+                }
+            />
+
+            <RecommendationBox
+                title="Not Recommended Picks"
+                data={counteredPicks}
+                excludedHeroes={excludedHeroes}
+                onSlotPress={(heroId, recommendationTitle) =>
+                    handleRecommendationSlotPress(heroId, recommendationTitle)
+                }
+            />
+
+            <RecommendationBox
+                title="Recommended To Ban"
+                data={enemyCounterPicks}
+                excludedHeroes={excludedHeroes}
+                onSlotPress={(heroId, recommendationTitle) =>
+                    handleRecommendationSlotPress(heroId, recommendationTitle)
+                }
+            />
 
             {memoizedHeroRelations}
 

@@ -50,13 +50,18 @@ export const getHeroRelations = async (
     return relations;
 };
 
-export const getAllHeroes = async (): Promise<HeroType[]> => {
+export const getAllHeroes = async (withRelations=false): Promise<HeroType[]> => {
   
     try {
-        const allHeroes = await db.getAllAsync(
+        const allHeroes = await db.getAllAsync<HeroType>(
             "SELECT * FROM hero ORDER BY name"
         );
-        return allHeroes as HeroType[];
+        if (withRelations) {
+          for (const hero of allHeroes) {
+            hero.relations = await getHeroRelations(hero)
+          }
+        }
+        return allHeroes;
     } catch {
         return [];
     }

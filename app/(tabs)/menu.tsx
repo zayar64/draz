@@ -14,7 +14,7 @@ import { heroes } from "@/constants";
 import { Container, View, Text, Icon, Prompt, Confirm } from "@/components";
 import { useGlobal, useTheme, useUser } from "@/contexts";
 import { IconType, RelationType, HeroType, HeroRelationType } from "@/types";
-import { alertPremium } from "@/utils"
+import { alertPremium } from "@/utils";
 
 export default function Menu() {
     const [iAmDeveloper, setIAmDeveloper] = useState<string>("0");
@@ -36,7 +36,7 @@ export default function Menu() {
     useFocusEffect(
         useCallback(() => {
             (async () => {
-                setIAmDeveloper(await kvstore.getItem("iAmDeveloper") || "0");
+                setIAmDeveloper((await kvstore.getItem("iAmDeveloper")) || "0");
             })();
         }, [])
     );
@@ -91,6 +91,23 @@ export default function Menu() {
             title: "Data Management",
             items: [
                 {
+                    label: "Delete All Hero Relations",
+                    onPress: () =>
+                        Confirm(
+                            "",
+                            "Are you sure to delete all hero relations ?",
+                            () =>
+                                execAsync(async () => {
+                                    await db.runAsync("DELETE FROM relation;");
+                                    await db.runAsync(
+                                        "UPDATE sqlite_sequence SET seq = 1 WHERE NAME = 'relation';"
+                                    );
+                                })
+                        ),
+                    icon: "delete",
+                    color: "red"
+                },
+                {
                     label: "Download Data",
                     onPress: () => execAsync(downloadDb),
                     icon: "download",
@@ -129,25 +146,6 @@ export default function Menu() {
                           icon: "database-refresh"
                       },
                       {
-                          label: "Delete All Heroes Relation",
-                          onPress: () =>
-                              Confirm(
-                                  "",
-                                  "Are you sure to delete all heroes relations ?",
-                                  () =>
-                                      execAsync(async () => {
-                                          await db.runAsync(
-                                              "DELETE FROM relation;"
-                                          );
-                                          await db.runAsync(
-                                              "UPDATE sqlite_sequence SET seq = 1 WHERE NAME = 'relation';"
-                                          );
-                                      })
-                              ),
-                          icon: "delete",
-                          color: "red"
-                      },
-                      {
                           label: "Terminal",
                           icon: "terminal",
                           onPress: () => router.push("/sqlite-terminal" as any),
@@ -180,7 +178,7 @@ export default function Menu() {
                                     }}
                                     onPress={
                                         item.disabled
-                                            ? ()=>alertPremium(router)
+                                            ? () => alertPremium(router)
                                             : item.onPress
                                     }
                                 >

@@ -3,7 +3,7 @@ import React, {
     useEffect,
     createContext,
     useContext,
-    ReactNode
+    useMemo
 } from "react";
 import {
     Alert,
@@ -14,6 +14,7 @@ import {
 } from "react-native";
 
 import Text from "@/components/Text";
+import { useTheme } from "./ThemeProvider";
 
 interface GlobalContextType {
     loading: boolean;
@@ -34,15 +35,49 @@ export function useGlobal() {
     return context;
 }
 
-export function GlobalProvider({ children }: { children?: ReactNode }) {
+export function GlobalProvider({ children }: { children?: React.ReactNode }) {
     const [loading, setLoading] = useState<boolean>(false);
     const [loadingText, setLoadingText] = useState<string>("");
     const [globalMessage, setGlobalMessage] = useState<string | null>(null);
+    const { colors } = useTheme();
+
+    const styles = useMemo(
+        () =>
+            StyleSheet.create({
+                container: {
+                    flex: 1
+                },
+                backdrop: {
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "rgba(0, 0, 0, 0.5)"
+                },
+                snackbar: {
+                    position: "absolute",
+                    bottom: 40,
+                    left: 20,
+                    right: 20,
+                    backgroundColor: colors.background,
+                    padding: 12,
+                    borderWidth: 2,
+                    borderColor: colors.border,
+                    borderRadius: 14,
+                    alignItems: "center"
+                },
+                snackbarText: {
+                    color: colors.text
+                }
+            }),
+        [colors]
+    );
 
     useEffect(() => {
-        setTimeout(() => {
-            setGlobalMessage("");
-        }, 3000);
+        if (globalMessage) {
+            setTimeout(() => {
+                setGlobalMessage("");
+            }, 1500);
+        }
     }, [globalMessage]);
 
     return (
@@ -77,30 +112,3 @@ export function GlobalProvider({ children }: { children?: ReactNode }) {
         </GlobalContext.Provider>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1
-    },
-    backdrop: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.5)"
-    },
-    snackbar: {
-        position: "absolute",
-        top: 20,
-        left: 20,
-        right: 20,
-        backgroundColor: "#161940",
-        padding: 16,
-        borderWidth: 2,
-        borderColor: "gray",
-        borderRadius: 14,
-        alignItems: "center"
-    },
-    snackbarText: {
-        color: "white"
-    }
-});

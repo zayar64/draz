@@ -12,8 +12,8 @@ const Confirm = (
             {
                 text: "Cancel",
                 onPress: () => {},
-                style: "cancel"
             },
+            {text: ""},
             {
                 text: "OK",
                 onPress: () => {

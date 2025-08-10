@@ -2,7 +2,7 @@
   "expo": {
     "name": "Draz",
     "slug": "draz",
-    "version": "1.5.2",
+    "version": "1.5.3",
     "orientation": "portrait",
     "icon": "./assets/images/draz.png",
     "userInterfaceStyle": "automatic",

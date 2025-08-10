@@ -1,3 +1,3 @@
 export { TeamSection } from "./TeamSection";
 export { BanSection } from "./BanSection";
-export { RecommendationBox } from "./RecommendationBox";
+export { default as RecommendationBox } from "./RecommendationBox";

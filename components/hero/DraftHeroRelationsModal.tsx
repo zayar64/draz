@@ -1,8 +1,5 @@
-import React, { useMemo } from "react";
-import {
-    Modal,
-    TouchableOpacity
-} from "react-native";
+import React, { useMemo, useState } from "react";
+import { Modal, TouchableOpacity } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { View, Text, Icon, HeroImage } from "@/components";
 import { increaseHexIntensity, reduceHexAlpha } from "@/utils";
@@ -10,25 +7,23 @@ import { useTheme } from "@/contexts";
 import Confirm from "@/components/Confirm";
 import { HeroType, RelationType } from "@/types";
 
-import {
-    RELATION_IMAGE_SIZE,
-    MODAL_CLASS_NAME,
-} from "./HeroRelationsModal";
+import { RELATION_IMAGE_SIZE, MODAL_CLASS_NAME } from "./HeroRelationsModal";
 
 const HeroRelationsModal = ({
     visible,
     hero,
     relationType,
-    onClose,
     setRelationType,
+    onClose,
+    excludedHeroes,
     headerRight
 }: {
     visible: boolean;
     hero: any;
     relationType: RelationType;
+    setRelationType: (v: RelationType) => void;
     onClose: () => void;
-    setRelationType: (type: RelationType) => void;
-
+    excludedHeroes: Record<string, true>;
     headerRight: React.ReactNode;
 }) => {
     const { colors } = useTheme();
@@ -36,20 +31,20 @@ const HeroRelationsModal = ({
         backgroundColor: increaseHexIntensity(colors.background, 0.2)
     };
 
-    const data: HeroType[] = (hero.relations?.[relationType] || []).sort(
-        (a: HeroType, b: HeroType) => (a.name || "").localeCompare(b.name || "")
-    );
+    const data: HeroType[] = (hero.relations?.[relationType] || [])
+        .sort((a: HeroType, b: HeroType) =>
+            (a.name || "").localeCompare(b.name || "")
+        )
+        .sort(
+            (a: HeroType, b: HeroType) =>
+                Number(!excludedHeroes[a.id]) - Number(!excludedHeroes[b.id])
+        );
 
     const relations = [
         { name: "Combo", colorRepresentation: "#50e750" },
         { name: "Weak Vs", colorRepresentation: "#f42828" },
         { name: "Strong Vs", colorRepresentation: "#f38726" }
     ];
-
-    const relation = useMemo(
-        () => relations.find(item => item.name === relationType),
-        [relationType]
-    );
 
     return (
         <Modal
@@ -85,47 +80,27 @@ const HeroRelationsModal = ({
                         )}
                     </View>
 
-                    {headerRight ? (
-                        <View className="rounded-md border-[2px] overflow-hidden flex-row justify-evenly">
-                            {relations.map(({ name, colorRepresentation }) => (
-                                <TouchableOpacity
-                                    key={name}
-                                    onPress={() =>
-                                        setRelationType(name as RelationType)
-                                    }
-                                    style={{
-                                        backgroundColor:
-                                            name === relationType
-                                                ? colorRepresentation
-                                                : undefined,
-                                        width: "33.33%",
-                                        borderColor: colors.border
-                                    }}
-                                    className="border-x justify-center items-center p-2"
-                                >
-                                    <Text variant="body">{name}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    ) : (
-                        <View className="flex-row justify-center items-center">
-                            <View
-                                className="border-b w-full"
+                    <View className="rounded-md border-[2px] overflow-hidden flex-row justify-evenly">
+                        {relations.map(({ name, colorRepresentation }) => (
+                            <TouchableOpacity
+                                key={name}
+                                onPress={() =>
+                                    setRelationType(name as RelationType)
+                                }
                                 style={{
-                                    borderColor: relation?.colorRepresentation
+                                    backgroundColor:
+                                        name === relationType
+                                            ? colorRepresentation
+                                            : undefined,
+                                    width: "33.33%",
+                                    borderColor: colors.border
                                 }}
-                            />
-                            <Text
-                                className="absolute m-[-8px] px-2"
-                                style={{
-                                    backgroundColor: modalStyle.backgroundColor,
-                                    color: relation?.colorRepresentation
-                                }}
+                                className="border-x justify-center items-center p-2"
                             >
-                                {relation?.name}
-                            </Text>
-                        </View>
-                    )}
+                                <Text variant="body">{name}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
 
                     <View />
 
@@ -136,6 +111,15 @@ const HeroRelationsModal = ({
                                 heroId={item.id}
                                 size={RELATION_IMAGE_SIZE}
                                 name={item.name}
+                                imageStyle={
+                                    excludedHeroes[item.id]
+                                        ? {
+                                              opacity: 0.5,
+                                              borderColor: colors.error,
+                                              backgroundColor: colors.background
+                                          }
+                                        : {}
+                                }
                             />
                         )}
                         showsVerticalScrollIndicator={false}
@@ -148,4 +132,8 @@ const HeroRelationsModal = ({
     );
 };
 
-export default React.memo(HeroRelationsModal, (prev, next) => prev.hero === next.hero && prev.relationType === next.relationType);
+export default React.memo(
+    HeroRelationsModal,
+    (prev, next) =>
+        prev.hero === next.hero && prev.relationType === next.relationType
+);

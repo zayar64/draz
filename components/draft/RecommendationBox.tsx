@@ -11,12 +11,12 @@ const BADGE_SIZE = IMAGE_SIZE * 0.4;
 
 type RecommendationBoxProps = {
     title: string;
-    data: [string, number][];
-    excludedHeroes: HeroType[];
+    data: Record<string, number>;
+    excludedHeroes: Record<string, true>;
     onSlotPress: (heroId: number, recommendationTitle: string) => void;
 };
 
-export const RecommendationBox = ({
+const RecommendationBox = ({
     title,
     data,
     excludedHeroes,
@@ -24,6 +24,17 @@ export const RecommendationBox = ({
     ...props
 }: RecommendationBoxProps) => {
     const { colors } = useTheme();
+
+    const filteredData = React.useMemo(
+        () =>
+            Object.entries(data)
+                .filter(([, count]) => count)
+                .sort((a, b) => b[1] - a[1])
+                .filter(
+                    ([id]) => !excludedHeroes[(id)]
+                ),
+        [data, excludedHeroes]
+    );
 
     return (
         <View {...props}>
@@ -35,9 +46,7 @@ export const RecommendationBox = ({
             </View>
             <View className="h-14 rounded-lg border flex-row px-2 pt-1">
                 <FlashList
-                    data={data.filter(
-                        ([id]) => !excludedHeroes.some(h => h.id === Number(id))
-                    )}
+                    data={filteredData}
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     renderItem={({ item }) => (
@@ -68,3 +77,12 @@ export const RecommendationBox = ({
         </View>
     );
 };
+
+export default React.memo(
+    RecommendationBox,
+    (prev, next) =>
+        prev.title === next.title &&
+        prev.data === next.data &&
+        prev.excludedHeroes === next.excludedHeroes &&
+        prev.onSlotPress === next.onSlotPress
+);
