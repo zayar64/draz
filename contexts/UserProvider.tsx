@@ -1,5 +1,6 @@
 import React, { useState, useEffect, createContext, useContext } from "react";
 import kvstore from "expo-sqlite/kv-store";
+import { verifyLicense } from "@/utils";
 
 interface UserContextProps {
     isPremiumUser: boolean;
@@ -8,18 +9,21 @@ interface UserContextProps {
 
 const UserContext = createContext<UserContextProps | null>(null);
 
+async function checkPremium() {
+    const license = await kvstore.getItemAsync("premium_license");
+    if (!license) return false;
+    const result = await verifyLicense(license);
+    return result.valid;
+}
+
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const [isPremiumUser, setIsPremiumUser] = useState<boolean>(false);
 
     useEffect(() => {
         (async () => {
-            setIsPremiumUser((await kvstore.getItem("isPremiumUser")) === "1");
-        })()
+            setIsPremiumUser(await checkPremium());
+        })();
     }, []);
-
-    useEffect(() => {
-        kvstore.setItem("isPremiumUser", isPremiumUser ? "1" : "0");
-    }, [isPremiumUser]);
 
     return (
         <UserContext.Provider

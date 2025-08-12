@@ -16,6 +16,8 @@ const HeroRelationsModal = ({
     setRelationType,
     onClose,
     excludedHeroes,
+    blueTeam,
+    redTeam,
     headerRight
 }: {
     visible: boolean;
@@ -24,6 +26,8 @@ const HeroRelationsModal = ({
     setRelationType: (v: RelationType) => void;
     onClose: () => void;
     excludedHeroes: Record<string, true>;
+    blueTeam: Record<string, true>;
+    redTeam: Record<string, true>;
     headerRight: React.ReactNode;
 }) => {
     const { colors } = useTheme();
@@ -61,7 +65,7 @@ const HeroRelationsModal = ({
             >
                 <View style={modalStyle} className={MODAL_CLASS_NAME}>
                     <View className="flex-row justify-between items-center">
-                        <View className="flex-row items-center space-x-2 mb-[6px]">
+                        <View className="flex-row items-center space-x-2 mb-[6px] grow">
                             <Icon name="arrow-back-ios" onPress={onClose} />
                             <HeroImage heroId={hero.id} size={50} />
                             <Text
@@ -111,13 +115,14 @@ const HeroRelationsModal = ({
                                 heroId={item.id}
                                 size={RELATION_IMAGE_SIZE}
                                 name={item.name}
+                                disabled={excludedHeroes[item.id]}
                                 imageStyle={
-                                    excludedHeroes[item.id]
+                                    blueTeam[item.id]
                                         ? {
-                                              opacity: 0.5,
-                                              borderColor: colors.error,
-                                              backgroundColor: colors.background
+                                              borderColor: colors.primary
                                           }
+                                        : redTeam[item.id]
+                                        ? { borderColor: colors.error }
                                         : {}
                                 }
                             />

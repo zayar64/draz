@@ -12,6 +12,7 @@ interface ImageType {
     size?: number;
     margin?: number;
     imageStyle?: Record<string, string | number>;
+    disabled?: boolean;
 }
 
 const DEFAULT_SIZE = 52;
@@ -21,16 +22,18 @@ const HeroImage = ({
     name,
     size = DEFAULT_SIZE,
     margin = 12,
-    imageStyle
+    imageStyle,
+    disabled = false
 }: ImageType) => {
     const image = heroImageMapping[heroId];
+    const disabledColor = "#484848";
 
     const borderWidth = size / (DEFAULT_SIZE / 2);
     return (
         <View
             className="flex-col justify-center items-center"
             style={{
-                margin,
+                margin
             }}
         >
             <View
@@ -40,6 +43,12 @@ const HeroImage = ({
                         height: size,
                         borderWidth
                     },
+                    disabled
+                        ? {
+                              backgroundColor: disabledColor,
+                              borderColor: disabledColor
+                          }
+                        : {},
                     imageStyle
                 ]}
                 className="rounded-full"
@@ -49,7 +58,8 @@ const HeroImage = ({
                     resizeMode="cover"
                     style={{
                         width: size - borderWidth * 2,
-                        height: size - borderWidth * 2
+                        height: size - borderWidth * 2,
+                        opacity: disabled ? 0.5 : 1
                     }}
                     className="rounded-full"
                 />
@@ -58,7 +68,13 @@ const HeroImage = ({
             {name && (
                 <Text
                     numberOfLines={1}
-                    style={{ width: size, fontSize: borderWidth * 4 }}
+                    style={[
+                        {
+                            width: size,
+                            fontSize: borderWidth * 4,
+                            opacity: disabled ? 0.3 : 1
+                        }
+                    ]}
                     className="text-center"
                 >
                     {name}

@@ -30,8 +30,10 @@ const RecommendationBox = ({
             Object.entries(data)
                 .filter(([, count]) => count)
                 .sort((a, b) => b[1] - a[1])
-                .filter(
-                    ([id]) => !excludedHeroes[(id)]
+                .sort(
+                    (a, b) =>
+                        Number(!excludedHeroes[a[0]]) -
+                        Number(!excludedHeroes[b[0]])
                 ),
         [data, excludedHeroes]
     );
@@ -69,6 +71,7 @@ const RecommendationBox = ({
                                 heroId={Number(item[0])}
                                 size={IMAGE_SIZE}
                                 margin={4}
+                                disabled={excludedHeroes[item[0]]}
                             />
                         </TouchableOpacity>
                     )}

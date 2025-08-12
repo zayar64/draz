@@ -3,6 +3,9 @@
 # dependencies
 node_modules/
 
+#files
+utils/licenseGenerator.ts
+
 # Expo
 .expo/
 dist/

@@ -239,6 +239,12 @@ const Draft = () => {
                         setRelationType("Combo");
                     }}
                     excludedHeroes={excludedHeroes}
+                    blueTeam={Object.fromEntries(
+                        blueTeam.map(hero => [hero?.id, true])
+                    )}
+                    redTeam={Object.fromEntries(
+                        redTeam.map(hero => [hero?.id, true])
+                    )}
                     headerRight={
                         excludedHeroes[selectedHero.id] && (
                             <Icon
@@ -249,7 +255,13 @@ const Draft = () => {
                                     setSelectedHero(null);
                                 }}
                             />
-                        )
+                        )/* : (
+                            <View className="space-y-2">
+                                <Button title="Pick" color="primary" />
+                                <Button title="Pick" color="error" />
+                                <Button title="Ban" color="background" />
+                            </View>
+                        )*/
                     }
                 />
             ) : null,
@@ -264,13 +276,27 @@ const Draft = () => {
                     setShowHeroSelections(false);
                     setSelectionTitle("");
                 }}
-                heroes={availableHeroes}
+                heroes={heroes}
+                excludedHeroes={excludedHeroes}
+                blueTeam={Object.fromEntries(
+                    blueTeam.map(hero => [hero?.id, true])
+                )}
+                redTeam={Object.fromEntries(
+                    redTeam.map(hero => [hero?.id, true])
+                )}
                 onSelect={hero => onSelect && onSelect(hero)}
                 selectionTitle={selectionTitle}
             />
         ),
-        [showHeroSelections, availableHeroes]
+        [showHeroSelections, heroes, excludedHeroes]
     );
+
+    const recommendationConfigs = [
+        { title: "Recommended Counter Picks", data: counterPicks },
+        { title: "Recommended Combo Picks", data: comboPicks },
+        { title: "Not Recommended Picks", data: counteredPicks },
+        { title: "Recommended To Ban", data: enemyCounterPicks }
+    ];
 
     return (
         <Container className="space-y-4">
@@ -337,41 +363,15 @@ const Draft = () => {
                 }}
             />
 
-            <RecommendationBox
-                title="Recommended Counter Picks"
-                data={counterPicks}
-                excludedHeroes={excludedHeroes}
-                onSlotPress={(heroId, recommendationTitle) =>
-                    handleRecommendationSlotPress(heroId, recommendationTitle)
-                }
-            />
-
-            <RecommendationBox
-                title="Recommended Combo Picks"
-                data={comboPicks}
-                excludedHeroes={excludedHeroes}
-                onSlotPress={(heroId, recommendationTitle) =>
-                    handleRecommendationSlotPress(heroId, recommendationTitle)
-                }
-            />
-
-            <RecommendationBox
-                title="Not Recommended Picks"
-                data={counteredPicks}
-                excludedHeroes={excludedHeroes}
-                onSlotPress={(heroId, recommendationTitle) =>
-                    handleRecommendationSlotPress(heroId, recommendationTitle)
-                }
-            />
-
-            <RecommendationBox
-                title="Recommended To Ban"
-                data={enemyCounterPicks}
-                excludedHeroes={excludedHeroes}
-                onSlotPress={(heroId, recommendationTitle) =>
-                    handleRecommendationSlotPress(heroId, recommendationTitle)
-                }
-            />
+            {recommendationConfigs.map(({ title, data }) => (
+                <RecommendationBox
+                    key={title}
+                    title={title}
+                    data={data}
+                    excludedHeroes={excludedHeroes}
+                    onSlotPress={handleRecommendationSlotPress}
+                />
+            ))}
 
             {memoizedHeroRelations}
 

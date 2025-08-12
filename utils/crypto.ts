@@ -1,37 +1,46 @@
-import * as Crypto from "expo-crypto";
+import * as Device from "expo-device";
+import { Buffer } from "buffer";
+import kvstore from "expo-sqlite/kv-store";
+import CryptoJS from "crypto-js";
 
-const SECRET_CODE = "zygod-64";
+export const SECRET_KEY = "zygod-64";
 
-export function generateRandomText(length: number = 20): string {
-    const charset =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let text = "";
-    for (let i = 0; i < length; i++) {
-        text += charset[Math.floor(Math.random() * charset.length)];
+export async function verifyLicense(license: string) {
+    try {
+        const decoded = Buffer.from(license, "base64").toString("utf-8");
+        const { payload, signature } = JSON.parse(decoded);
+
+        // Check device ID match
+        const currentDeviceId = Device.osInternalBuildId ?? "UNKNOWN";
+
+        if (payload.deviceId !== currentDeviceId) {
+            return {
+                valid: false,
+                reason: "License is for a different device"
+            };
+        }
+
+        // Check expiry
+        if (new Date(payload.expiry) < new Date()) {
+            return { valid: false, reason: "License expired" };
+        }
+
+        // Validate signature
+        const payloadStr = JSON.stringify(payload);
+        const expectedSig = CryptoJS.HmacSHA256(
+            payloadStr,
+            SECRET_KEY
+        ).toString(CryptoJS.enc.Hex);
+
+        if (signature !== expectedSig) {
+            return { valid: false, reason: "Invalid license signature" };
+        }
+
+        // Save locally
+        await kvstore.setItemAsync("premium_license", license);
+        return { valid: true, reason: "OK" };
+    } catch (e: any) {
+        return { valid: false, reason: "Corrupted license" };
+        //return { valid: false, reason: e.message };
     }
-    return text;
-
-    /*return await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        `${Date.now()}-${SECRET_CODE}`
-    );*/
-}
-
-export async function generatePremiumKey(text: string): Promise<string> {
-    // Generate key
-    const key = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        `${text}-${SECRET_CODE}`
-    );
-    return key;
-
-    // Format it to UUID v4-like structure (8-4-4-4-12)
-    const formattedKey = [
-        key.slice(0, 8),
-        key.slice(8, 12),
-        key.slice(12, 16),
-        key.slice(16, 20),
-        key.slice(20, 32)
-    ].join("-");
-    return formattedKey;
 }

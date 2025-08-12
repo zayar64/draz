@@ -19,13 +19,19 @@ const HeroSelectionModal = ({
     onClose,
     heroes,
     onSelect,
-    selectionTitle
+    selectionTitle,
+    excludedHeroes,
+    blueTeam,
+    redTeam
 }: {
     visible: boolean;
     onClose: () => void;
     heroes: HeroType[];
     onSelect: (hero: HeroType) => void;
     selectionTitle: string;
+    excludedHeroes: Record<string, true>;
+    blueTeam: Record<string, true>;
+    redTeam: Record<string, true>;
 }) => {
     const [search, setSearch] = useState<string>("");
     const { colors } = useTheme();
@@ -64,15 +70,32 @@ const HeroSelectionModal = ({
 
     // Stable renderItem
     const renderItem = useCallback(
-        ({ item }: { item: HeroType }) => (
-            <TouchableOpacity onPress={() => onSelect(item)} className="p-1">
-                <HeroImage
-                    heroId={item.id}
-                    name={item.name}
-                    size={RELATION_IMAGE_SIZE}
-                />
-            </TouchableOpacity>
-        ),
+        ({ item }: { item: HeroType }) => {
+            const disabled = excludedHeroes[item.id];
+            return (
+                <TouchableOpacity
+                    onPress={() => onSelect(item)}
+                    className="p-1"
+                    disabled={disabled}
+                >
+                    <HeroImage
+                        heroId={item.id}
+                        name={item.name}
+                        size={RELATION_IMAGE_SIZE}
+                        disabled={disabled}
+                        imageStyle={
+                                    blueTeam[item.id]
+                                        ? {
+                                              borderColor: colors.primary
+                                          }
+                                        : redTeam[item.id]
+                                        ? { borderColor: colors.error }
+                                        : {}
+                                }
+                    />
+                </TouchableOpacity>
+            );
+        },
         [onSelect]
     );
 

@@ -37,12 +37,12 @@ const Button = ({
                 {
                     width: fullWidth ? "100%" : undefined,
                     minWidth: 80,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    backgroundColor: reduceHexAlpha(
-                        bgColor,
-                        pressingIn || disabled ? 0.8 : 0
-                    ),
+                    borderWidth: 2,
+                    borderColor: bgColor,
+                    backgroundColor:
+                        pressingIn || disabled
+                            ? reduceHexAlpha(bgColor, 0.5)
+                            : undefined,
                     flexDirection: "row",
                     justifyContent: "center",
                     alignItems: "center",
