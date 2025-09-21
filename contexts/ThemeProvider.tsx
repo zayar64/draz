@@ -32,7 +32,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     children
 }) => {
     const systemTheme = useColorScheme() as Mode;
-    const [mode, setThemeState] = useState<Mode>(systemTheme || "light");
+    const [mode, setThemeState] = useState<Mode>(systemTheme || "dark");
 
     const colors: Colors = useMemo(() => {
         const colorsMapping: Record<string, string | colorModeType> = {
